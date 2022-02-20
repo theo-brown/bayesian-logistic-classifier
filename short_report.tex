@@ -138,7 +138,8 @@
     training and test sets, after which no further improvements can be made. This suggests an optimum has been found for
     this model. After training there remains a difference between the performance on the test and training sets, which
     could suggest that the model with the given parameters has failed to capture the underlying pattern or has been
-    overfitted. Additional metrics are required to assess the model performance further.
+    overfitted. The significance of this difference is assessed in the next section, along with additional performance
+    metrics.
 
     \section{Model performance}\label{sec:model-performance}
     The predictive distribution of the model is shown in \autoref{fig:predictive_distribution_linear}. It is clear that
@@ -153,4 +154,33 @@
         \includegraphics[width=0.8\textwidth]{plots/predictive_distribution_linear.png}
         \caption{Model predictive distribution overlaid on input datapoints, coloured by true classification}
     \end{figure}
+
+    The mean log-likelihood of the trained model evaluated on the training and test sets is shown in
+    \autoref{tab:performance_metrics_linear}. It shows a difference of 3-4\% between the training and test data, which is
+    sufficiently small to suggest that overfitting has been avoided. As expected, the performance is marginally better
+    for the training set, as this was the data that the model was fit to.
+
+    A hard threshold is applied to the data, where if the class probability for a datapoint is greater than 0.5 the
+    datapoint is assigned that class.
+
+    \begin{figure}[h]
+        \label{tab:performance_metrics_linear}
+        \centering
+        \begin{tabular}{c|c}
+            \textbf{Performance metric} & \textbf{Value} \\
+            \hline
+            Mean log-likelihood, training data & -0.62927 \\
+            Mean log-likelihood, test data & -0.60443 \\
+            $\begin{pmatrix}
+                 P(\hat{y}=0 | y=0) & P(\hat{y}=1 | y=0) \\
+                 P(\hat{y}=0 | y=1) & P(\hat{y}=1 | y=1) \\
+            \end{pmatrix}$ &
+            $\begin{pmatrix}
+                0.7642 & 0.2358 \\
+                0.2766 & 0.7234 \\
+            \end{pmatrix}$ \\
+        \end{tabular}
+        \caption{Performance metrics for the linear classifier}
+    \end{figure}
+
 \end{document}
