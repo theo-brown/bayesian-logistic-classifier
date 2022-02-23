@@ -61,21 +61,32 @@
     \end{align*}
 
     \section{Gradient ascent algorithm}\label{sec:gradient-ascent-algorithm}
-    To find the parameter $w$ that maximises the log-likelihood, the following gradient ascent algorithm is used:
+    To find the parameter $w$ that maximises the log-likelihood, a gradient ascent algorithm is used. Define
+    $\tilde{X}$ and y as in \autoref{sec:gradient-derivation}, then let n be the number of iterations to run the
+    algorithm for and r be the learning rate. The algorithm is defined as follows:
 
-    \begin{algorithmic}[1]
-        \Procedure{GradientAscent}{X, y, n, r}
-            \State $a \gets [1 \dots 1]^T$
-            \State $\tilde{X} \gets [a ; X]$
-            \State $w \gets [0 \dots 0]$
+    \begin{algorithmic}
+        \Procedure{GradientAscent}{$\tilde{X}$, y, n, r}
+            \State $w \gets [0 \dots 0]$ \Comment{Initialise the weights}
             \For{$i\gets 1, n$}
-                \State $J \gets (y - (1 - \exp(\tilde{X} w))) \tilde{X}$
-                \State $w \gets w + rJ$
+                \State $s \gets \sigma(\tilde{X}w)$
+                \State $d \gets \tilde{X} (y - \sigma)$ \Comment{Calculate the gradient}
+                \State $w \gets w + rd $ \Comment{Move along the gradient, scaled by learning rate}
             \EndFor
         \EndProcedure
     \end{algorithmic}
 
-    In Python, this can be implemented as follows:
+    Note that the weights do not necessarily need to be initialised as zeros - they could have been selected randomly, or
+    initialised as ones, for example. Provided the number of iterations is large enough and the algorithm does not get
+    stuck in a local maximum, the effect of the initial values should be negligible.
+
+    The learning rate, n, is chosen empirically. Starting with a value chosen such the algorithm shows signs
+    of convergence, the learning rate is increased until the algorithm begins to oscillate. The rate is then decreased
+    slightly so that the oscillation is avoided. Using this method, a fast rate of convergence is ensured and divergence
+    avoided.
+
+    In Python\footnote{The Python 3.5+ matrix multiplication operator $@$ provides an easy method of vectorising the
+    operations}, the gradient ascent algorithm can be implemented as follows:
 
     \begin{minted}{python}
         import numpy as np
@@ -93,20 +104,11 @@
             for i in range(number_iterations):
                 # Calculate the gradient
                 dL = (y - logistic(X1 @ w)) @ X1
-                # Move an amount proportional to the learning rate
-                # in the direction of the gradient
+                # Move in the direction of the gradient,
+                # scaled by learning rate
                 w += learning_rate * dL
             return w
     \end{minted}
-
-    Note that the weights do not necessarily need to be initialised as ones - they could have been selected randomly, or
-    initialised at zero, for example. The Python 3.5+ matrix multiplication operator $@$ is used to vectorise the
-    operations.
-
-    The \verb`learning_rate` parameter is chosen empirically. Starting with a value chosen such the algorithm shows signs
-    of convergence, the learning rate is increased until the algorithm begins to oscillate. The rate is then decreased
-    slightly so that the oscillation is avoided. Using this method, a fast rate of convergence is ensured and divergence
-    avoided.
 
     \section{Data visualisation}\label{sec:data-visualisation}
     The data is visualised in the two-dimensional input space in \autoref{fig:data}. From the plot it is clear that a
