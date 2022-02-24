@@ -54,7 +54,7 @@
     The class labels, $\textbf{y}$, are modelled as being independent and identically generated from a Bernoulli
     distribution, with $p (y_n = 1 | \tilde{\textbf{x}}_n ) = \sigma (\textbf{w}^T\tilde{\textbf{x}}_n)$ and
     $p (y_n = 0 | \tilde{\textbf{x}}_n ) = 1 - \sigma (\textbf{w}^T\tilde{\textbf{x}}_n) = \sigma (-\textbf{w}^T\tilde{\textbf{x}}_n)$,
-    where $\textbf{w}$ is the vector of model weights.
+    where $\textbf{w}$ is a vector of model weights.
     The log-likelihood of \textbf{w} is therefore:
     \begin{align*}
         \mathcal{L}(w) = \log p(y|\tilde{\textbf{X}}, \textbf{w})
@@ -72,17 +72,16 @@
     \end{align*}
 
     \section{Gradient ascent algorithm}\label{sec:gradient-ascent-algorithm}
-    To find the parameter $w$ that maximises the log-likelihood, a gradient ascent algorithm is used. Define
-    $\tilde{X}$ and y as in \autoref{sec:gradient-derivation}, then let n be the number of iterations to run the
+    To find the parameter $\textbf{w}$ that maximises the log-likelihood, a gradient ascent algorithm is used. Define
+    $\tilde{\textbf{X}}$ and y as in \autoref{sec:gradient-derivation}, then let n be the number of iterations to run the
     algorithm for and r be the learning rate. The algorithm is defined as follows:
 
     \begin{algorithmic}
-        \Procedure{GradientAscent}{$\tilde{X}$, y, n, r}
-            \State $w \gets [0 \dots 0]$ \Comment{Initialise the weights}
+        \Procedure{GradientAscent}{$\tilde{\textbf{X}}$, $\textbf{y}$, n, r}
+            \State $\textbf{w} \gets [0 \dots 0]^T$ \Comment{Initialise the weights}
             \For{$i\gets 1, n$}
-                \State $s \gets \sigma(\tilde{X}w)$
-                \State $d \gets \tilde{X} (y - \sigma)$ \Comment{Calculate the gradient}
-                \State $w \gets w + rd $ \Comment{Move along the gradient, scaled by learning rate}
+                \State $\textbf{d} \gets \tilde{\textbf{X}} (\textbf{y} - \sigma(\tilde{\textbf{X}}^T \textbf{w})))$ \Comment{Calculate the gradient}
+                \State $\textbf{w} \gets \textbf{w} + r\textbf{d} $ \Comment{Move along the gradient, scaled by learning rate}
             \EndFor
         \EndProcedure
     \end{algorithmic}
@@ -97,7 +96,8 @@
     avoided.
 
     In Python\footnote{The Python 3.5+ matrix multiplication operator $@$ provides an easy method of vectorising the
-    operations}, the gradient ascent algorithm can be implemented as follows:
+    operations}, the gradient ascent algorithm can be implemented as follows, noting the necessary alterations from
+    column to row vectors:
 
     \begin{minted}{python}
         import numpy as np
