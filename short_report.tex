@@ -46,18 +46,29 @@
     classifying to allow the discovery of non-linear decision boundaries.
 
     \section{Derivation of the gradient of the log-likelihood}\label{sec:gradient-derivation}
-    If each datapoint's class label is assumed to be independent and identically generated from a Bernoulli distribution
-    in which the probability of a class label is given by a logistic function applied to weighted inputs, the
-    log-likelihood is as follows:
+    Define the n-th input vector as $\textbf{x}_n$, and let the augmented input vector
+    $\tilde{\textbf{x}}_n = \left[1, \textbf{x}_n^T \right]^T$.
+    The set of augmented input vectors are assembled as the columns of matrix
+    $\tilde{\textbf{X}} = [\tilde{\textbf{x}}_1, \dots, \tilde{\textbf{x}}_N]$.
+    Define $\sigma(x) = \frac{1}{1 + e^{-x}}$.
+    The class labels, $\textbf{y}$, are modelled as being independent and identically generated from a Bernoulli
+    distribution, with $p (y_n = 1 | \tilde{\textbf{x}}_n ) = \sigma (\textbf{w}^T\tilde{\textbf{x}}_n)$ and
+    $p (y_n = 0 | \tilde{\textbf{x}}_n ) = 1 - \sigma (\textbf{w}^T\tilde{\textbf{x}}_n) = \sigma (-\textbf{w}^T\tilde{\textbf{x}}_n)$,
+    where $\textbf{w}$ is the vector of model weights.
+    The log-likelihood of \textbf{w} is therefore:
     \begin{align*}
-        \mathcal{L}(w) = \log P(y|X, w) &= \log \prod_{n=1}^{N} \sigma(w^T \tilde{x}^{(n)})^{y^{(n)}}\sigma(-w^T \tilde{x}^{(n)})^{1-y^{(n)}} \\
-        &= \sum_{n=1}^{N} y^{(n)} \log\sigma(w^T \tilde{x}^{(n)}) + (1-y^{(n)}) \log\sigma(-w^T \tilde{x}^{(n)})
+        \mathcal{L}(w) = \log p(y|\tilde{\textbf{X}}, \textbf{w})
+        &= \log \prod_{n=1}^{N} \sigma( \textbf{w}^T \tilde{\textbf{x}}_n)^{y_n}
+        \sigma (-\textbf{w}^T \tilde{\textbf{x}}_n)^{1-y_n} \\
+        &= \sum_{n=1}^{N} y_n \log\sigma( \textbf{w}^T \tilde{\textbf{x}}_n) + (1-y_n) \log\sigma(-w^T \tilde{\textbf{x}}_n)
     \end{align*}
     The derivative of the log-likelihood is calculated using the identities $\frac{d\sigma(x)}{dx} = \sigma(x)\sigma(-x)$
     and $\frac{d\log(x)}{dx} = \frac{1}{x}$. Applying the chain rule:
     \begin{align*}
-        \frac{\partial \mathcal{L}}{\partial w} &= \sum_{n=1}^{N} y^{(n)} \sigma(-w^T \tilde{x}^{(n)}) \tilde{x}^{(n)} - (1-y^{(n)}) \sigma(w^T \tilde{x}^{(n)})  \tilde{x}^{(n)}
-        \\ &= \sum_{n=1}^{N} \left(y^{(n)} - \sigma(w^T \tilde{x}^{(n)}) \right)  \tilde{x}^{(n)}
+        \frac{\partial \mathcal{L}}{\partial w}
+        &= \sum_{n=1}^{N} y_n \sigma(-\textbf{w}^T \tilde{\textbf{x}}_n) \tilde{\textbf{x}}_n - (1-y_n) \sigma(\textbf{w}^T \tilde{\textbf{x}}_n)  \tilde{\textbf{x}}_n \\
+        &= \sum_{n=1}^{N} \left(y_n - \sigma(\textbf{w}^T \tilde{\textbf{x}}_n) \right)  \tilde{\textbf{x}}_n \\
+        &= \tilde{\textbf{X}} (\textbf{y} - \sigma(\tilde{\textbf{X}}^T \textbf{w}))
     \end{align*}
 
     \section{Gradient ascent algorithm}\label{sec:gradient-ascent-algorithm}
