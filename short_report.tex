@@ -24,12 +24,16 @@
 \begin{document}
 
     \title{Logistic Classification}
-    \author{3F8 laboratory experiment \\ Theo Brown \\ Selwyn College, University of Cambridge}
+    \author{3F8: Inference Coursework \\ Theo Brown \\ Selwyn College, University of Cambridge}
     \date{\today}
     \maketitle
 
     \begin{abstract}
-        Enter a short summary here.
+        The method of logistic regression using gradient ascent optimisation is presented as a means of training a
+        linear classifier. The linear classifier is trained on a test data set, and shown to perform poorly. A set of
+        non-linear basis functions are introduced, which can be applied to the input data to enable the logistic
+        regression model to fit to non-linear data sets. The classifier using basis functions is shown to perform well
+        on the data set, after tuning of the basis function parameters.
     \end{abstract}
 
     \section{Introduction}\label{sec:introduction}
@@ -126,25 +130,32 @@
     linear classifier will perform badly on the data, as the classes are not linearly separable: there is no straight
     boundary that successfully distinguishes between red and blue data points.
 
-    \begin{figure}[h]
-        \label{fig:data}
-        \centering
-        \includegraphics[width=0.8\textwidth]{plots/data.png}
-        \caption{Plot of the two-dimensional input features (1000 datapoints, 2 classes)}
-    \end{figure}
-
     \section{Linear classifier training}\label{sec:linear-training}
     The data was split into a training set of 800 points and a test set of 200 points, and the gradient descent
     algorithm with a learning rate of 0.001 was applied to find the weights for the linear classifier. The mean
     log-likelihood (where the mean is taken across all of the weights) is plotted in \autoref{fig:linear_log_likelihood} for
     the training and test datasets at each iteration.
 
-    \begin{figure}[h]
-        \label{fig:linear_log_likelihood}
-        \centering
-        \includegraphics[width=0.8\textwidth]{plots/log_likelihood.png}
-        \caption{Plot of the mean log-likelihood of the weights for the test and training data, over the
-        course of model training}
+    \begin{figure}
+        \begin{minipage}{0.32\textwidth}
+            \label{fig:data}
+            \centering
+            \includegraphics[width=\textwidth]{plots/data.png}
+            \captionof{figure}{Plot of the two-dimensional input features (1000 datapoints, 2 classes)}
+        \end{minipage}%
+        \begin{minipage}{0.32\textwidth}
+            \label{fig:linear_log_likelihood}
+            \centering
+            \includegraphics[width=\textwidth]{plots/log_likelihood.png}
+            \captionof{figure}{Plot of the mean log-likelihood of the weights for the test and training data, over the
+            course of model training}
+        \end{minipage}%
+        \begin{minipage}{0.32\textwidth}
+            \label{fig:linear_predictive_distribution}
+            \centering
+            \includegraphics[width=\textwidth]{plots/predictive_distribution_linear.png}
+            \captionof{figure}{Model predictive distribution overlaid on input datapoints coloured by class}
+        \end{minipage}
     \end{figure}
 
     \autoref{fig:linear_log_likelihood} shows that a plateau is reached for the log-likelihood of the parameters in both the
@@ -159,17 +170,11 @@
     the human eye that this is overly simplified and fails to identify the `islands' where one class appears surrounded
     by the other.
 
-    \begin{figure}[h]
-        \label{fig:linear_predictive_distribution}
-        \centering
-        \includegraphics[width=0.8\textwidth]{plots/predictive_distribution_linear.png}
-        \caption{Model predictive distribution overlaid on input datapoints coloured by class}
-    \end{figure}
-
     The mean log-likelihood of the trained model evaluated on the training and test sets is shown in
-    \autoref{tab:performance_metrics_linear}. It shows a difference of 3-4\% between the training and test data, which is
+    \autoref{tab:performance_metrics_linear}. It shows a difference of about 2\% between the training and test data, which is
     sufficiently small to suggest that overfitting has been avoided. As expected, the performance is marginally better
-    for the training set, as this was the data that the model was fit to.
+    for the training set, as this was the data that the model was fit to. The main issue here is clearly not overfitting,
+    instead it is apparent that the model is insufficient.
 
     To find the predicted class label for a point $\boldsymbol{x}_n$, a hard threshold is applied to the predicted class
     probabilities:
@@ -185,34 +190,144 @@
     performance, as it shows the fraction of correct and incorrect classifications for each class.
 
     \autoref{tab:performance_metrics_linear} shows that the linear classifier successfully identifies class 0 about
-    75\% of the time. Comparing with \autoref{fig:linear_predictive_distribution}, we can see that the decision boundary
+    70\% of the time. Comparing with \autoref{fig:linear_predictive_distribution}, we can see that the decision boundary
     (shown as a contour of value 0.0) correctly separates roughly four out of six visually identifiable clusters of
-    class 0, and fails to account for two. Similarly, the classifier identifies class 1 70\% of the time, and the
-    decision boundary separates approximately four out of five visually identifiable class 1 clusters.
+    class 0, and fails to account for two. Similarly, the classifier identifies class 1 69\% of the time, and the
+    decision boundary separates approximately three and a half out of five visually identifiable class 1 clusters.
 
-    \begin{figure}[h]
+    \begin{table}[h]
         \label{tab:performance_metrics_linear}
         \centering
         \begin{tabular}{c|c}
             \textbf{Performance metric} & \textbf{Value} \\
             \hline
-            Mean log-likelihood, training data & -0.629 \\
-            Mean log-likelihood, test data & -0.604 \\
+            Mean log-likelihood, training data & -0.623 \\
+            Mean log-likelihood, test data & -0.628 \\
             $\begin{pmatrix}
                  P(\hat{y}=0 | y=0) & P(\hat{y}=1 | y=0) \\
                  P(\hat{y}=0 | y=1) & P(\hat{y}=1 | y=1) \\
             \end{pmatrix}$ &
             $\begin{pmatrix}
-                0.764 & 0.235 \\
-                0.276 & 0.723 \\
+                0.707 & 0.293 \\
+                0.306 & 0.694 \\
             \end{pmatrix}$ \\
         \end{tabular}
         \caption{Performance metrics for the linear classifier}
-    \end{figure}
+    \end{table}
 
-    We conclude that the linear classifier does not provide a particularly useful result for this dataset.
-    A new method is presented in the next section, which uses a non-linear basis function to allow the classifier to
+    It's clear that, as expected, the linear classifier does not provide a particularly useful result for this dataset.
+    A new method is presented in the next section, which uses a set of non-linear basis functions to allow the classifier to
     identify non-linear class boundaries.
 
+    \section{Non-linear classifier definition and training}\label{sec:nonlinear-classifier}
+    In order to identify non-linear class boundaries, the inputs can be expanded through a set of non-linear basis functions.
+    Then the same logistic regression approach can be used to create the classifier.
+    First, define a radial basis function (RBF) of the distance between two datapoints of dimension D, with width parameter l, as:
+    \begin{align*}
+        r(\textbf{x}_n, \textbf{x}_m, l) = \exp \left(-\frac{1}{2l^2} \sum_{d=1}^D (\textbf{x}_{n, d} - \textbf{x}_{m, d})^2 \right)
+    \end{align*}
+    Then define a new set of N augmented input vectors $\tilde{\textbf{x}}_n = [1, r(\textbf{x}_n, \textbf{x}_1, l), \dots, r(\textbf{x}_n, \textbf{x}_N, l)]^T$.
+    The augmented input vectors are assembled into a matrix, as before, and the data split into test and training data sets.
+    The gradient descent algorithm from \autoref{sec:gradient-ascent-algorithm} was applied to find the model weights,
+    for RBFs with $l$ = 0.01, 0.1, and 1.
+    The learning rate was set empirically for each value of the parameter $l$.
 
+    \section{Non-linear classifier performance}\label{sec:nonlinear-performance}
+
+    \autoref{tab:performance_metrics_nonlinear} shows the performance metrics for the classifier with different basis
+    function widths.
+
+    It is apparent that when $l = 0.01$, the model is drastically overfit to the training data, achieving
+    a very small log-likelihood for the training data but scoring very poorly for the test data. \autoref{fig:nonlinear_predictive_distribution_0.01}
+    shows decision boundaries that are effectively surrounding each individual training data point, which
+    illustrates the overfitting.
+    From the confusion matrix it is evident that this classifier is strongly biased towards class 0, successfully identifying class 0 95\% of the time
+    but also falsely classifying 85\% of class 1 as class 0.
+
+    \begin{figure}[h!]
+        \begin{subfigure}{0.32\textwidth}
+            \label{fig:nonlinear_predictive_distribution_0.01}
+            \centering
+            \includegraphics[width=\textwidth]{plots/predictive_distribution_nonlinear_w=0.01.png}
+            \caption{$l$=0.01}
+        \end{subfigure}
+        \begin{subfigure}{0.32\textwidth}
+            \label{fig:nonlinear_predictive_distribution_0.1}
+            \centering
+            \includegraphics[width=\textwidth]{plots/predictive_distribution_nonlinear_w=0.1.png}
+            \caption{$l$=0.1}
+        \end{subfigure}
+        \begin{subfigure}{0.32\textwidth}
+            \label{fig:nonlinear_predictive_distribution_1}
+            \centering
+            \includegraphics[width=\textwidth]{plots/predictive_distribution_nonlinear_w=1.png}
+            \caption{$l$=1}
+        \end{subfigure}
+        \label{fig:nonlinear_predictive_distributions}
+        \caption{Non-linear classifier predictive distributions}
+    \end{figure}
+
+    \begin{table}[h!]
+        \label{tab:performance_metrics_nonlinear}
+        \centering
+        \begin{tabular}{c|c|c|c}
+            \textbf{Performance metric} & \textbf{$l$ = 0.01} & \textbf{$l$ = 0.1} & \textbf{$l$ = 1}\\
+            \hline
+            Mean log-likelihood, training data & -0.193 & -0.110 & -0.198 \\
+            Mean log-likelihood, test data & -0.677 & -0.299 & -0.272 \\
+            $\begin{pmatrix}
+                 P(\hat{y}=0 | y=0) & P(\hat{y}=1 | y=0) \\
+                 P(\hat{y}=0 | y=1) & P(\hat{y}=1 | y=1) \\
+            \end{pmatrix}$ &
+            $\begin{pmatrix}
+                0.957 & 0.043 \\
+                0.852 & 0.148 \\
+            \end{pmatrix}$ &
+            $\begin{pmatrix}
+                0.902 & 0.098 \\
+                0.139 & 0.861 \\
+            \end{pmatrix}$ &
+            $\begin{pmatrix}
+                0.902 & 0.098 \\
+                0.102 & 0.898 \\
+            \end{pmatrix}$ \\
+        \end{tabular}
+        \caption{Performance metrics for the linear classifier}
+    \end{table}
+
+    Increasing the width of the basis function to $l = 0.1$ drastically improves the classifier's performance,
+    returning smaller log-likelihoods (suggesting it is more optimal) and improving the reliability of classifying class
+    1. In particular note that the difference in performance on the training set and test set has been reduced, implying
+    that the classifier is less overfitted. \autoref{fig:nonlinear_predictive_distribution_0.1} still exhibits a similar
+    property to \autoref{fig:nonlinear_predictive_distribution_0.01}, where the decision regions are very close to the data,
+    hence this classifier would perform poorly in labelling new points that lay further from the main clusters of each class.
+
+    Further increasing the width continues to improve the classifier's performance, narrowing the gap between
+    performance on the test and training sets, and improving the percentage of correct classifications for class 1.
+    \autoref{fig:nonlinear_predictive_distribution_1} shows that the decision regions now extend beyond the data points,
+    and nicely divide the $(x_1, x_2)$ plane. This is more the behaviour that we expect for a classifier,
+    although perhaps in this example it is extrapolating too far from the data.
+
+    It is likely that further optimisation of the width parameter $l$ would be fruitful in improving the
+    classifier's performance.
+
+    The best performance of the non-linear classifier is a dramatic improvement over the linear classifier, achieving 90\%
+    success rate in identifying points of each class compared to the linear classifier's 70\%. The log-likelihood has also
+    been reduced, suggesting that this model is a better fit to the data.
+
+    \section{Conclusions}
+    The method presented here is a powerful tool for developing classifiers. It is straightforward to find the
+    model weights for the logistic model, using well-known and easily optimised gradient ascent algorithms. The equations
+    are simple to vectorise, which makes them inexpensive to calculate on a computer.
+
+    The importance of understanding the data before attempting to create a model is demonstrated by the failure
+    of the linear classifier. Before embarking on developing the classifier, the expected shape of the data must be
+    appreciated - is the data linearly separable? If not, then additional steps must be taken.
+
+    Expanding the inputs through basis functions, such as the radial function presented here, unlocks the potential
+    to classify non-linear data sets. A non-linear classifier using this method can be very successful, at minimal
+    additional cost.
+
+    The parameters of the gradient ascent algorithm and the basis functions must be chosen carefully
+    to ensure convergence on an appropriate, non-overfitted model.
 \end{document}
