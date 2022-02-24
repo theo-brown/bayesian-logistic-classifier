@@ -24,7 +24,7 @@
 \begin{document}
 
     \title{Logistic Classification}
-    \author{3F8 laboratory experiment \\ Theo A. Brown \\ Selwyn College, University of Cambridge}
+    \author{3F8 laboratory experiment \\ Theo Brown \\ Selwyn College, University of Cambridge}
     \date{\today}
     \maketitle
 
@@ -72,21 +72,32 @@
     \end{align*}
 
     \section{Gradient ascent algorithm}\label{sec:gradient-ascent-algorithm}
-    To find the parameter $w$ that maximises the log-likelihood, the following gradient ascent algorithm is used:
+    To find the parameter $w$ that maximises the log-likelihood, a gradient ascent algorithm is used. Define
+    $\tilde{X}$ and y as in \autoref{sec:gradient-derivation}, then let n be the number of iterations to run the
+    algorithm for and r be the learning rate. The algorithm is defined as follows:
 
-    \begin{algorithmic}[1]
-        \Procedure{GradientAscent}{X, y, n, r}
-            \State $a \gets [1 \dots 1]^T$
-            \State $\tilde{X} \gets [a ; X]$
-            \State $w \gets [0 \dots 0]$
+    \begin{algorithmic}
+        \Procedure{GradientAscent}{$\tilde{X}$, y, n, r}
+            \State $w \gets [0 \dots 0]$ \Comment{Initialise the weights}
             \For{$i\gets 1, n$}
-                \State $J \gets (y - (1 - \exp(\tilde{X} w))) \tilde{X}$
-                \State $w \gets w + rJ$
+                \State $s \gets \sigma(\tilde{X}w)$
+                \State $d \gets \tilde{X} (y - \sigma)$ \Comment{Calculate the gradient}
+                \State $w \gets w + rd $ \Comment{Move along the gradient, scaled by learning rate}
             \EndFor
         \EndProcedure
     \end{algorithmic}
 
-    In Python, this can be implemented as follows:
+    Note that the weights do not necessarily need to be initialised as zeros - they could have been selected randomly, or
+    initialised as ones, for example. Provided the number of iterations is large enough and the algorithm does not get
+    stuck in a local maximum, the effect of the initial values should be negligible.
+
+    The learning rate, n, is chosen empirically. Starting with a value chosen such the algorithm shows signs
+    of convergence, the learning rate is increased until the algorithm begins to oscillate. The rate is then decreased
+    slightly so that the oscillation is avoided. Using this method, a fast rate of convergence is ensured and divergence
+    avoided.
+
+    In Python\footnote{The Python 3.5+ matrix multiplication operator $@$ provides an easy method of vectorising the
+    operations}, the gradient ascent algorithm can be implemented as follows:
 
     \begin{minted}{python}
         import numpy as np
@@ -104,20 +115,11 @@
             for i in range(number_iterations):
                 # Calculate the gradient
                 dL = (y - logistic(X1 @ w)) @ X1
-                # Move an amount proportional to the learning rate
-                # in the direction of the gradient
+                # Move in the direction of the gradient,
+                # scaled by learning rate
                 w += learning_rate * dL
             return w
     \end{minted}
-
-    Note that the weights do not necessarily need to be initialised as ones - they could have been selected randomly, or
-    initialised at zero, for example. The Python 3.5+ matrix multiplication operator $@$ is used to vectorise the
-    operations.
-
-    The \verb`learning_rate` parameter is chosen empirically. Starting with a value chosen such the algorithm shows signs
-    of convergence, the learning rate is increased until the algorithm begins to oscillate. The rate is then decreased
-    slightly so that the oscillation is avoided. Using this method, a fast rate of convergence is ensured and divergence
-    avoided.
 
     \section{Data visualisation}\label{sec:data-visualisation}
     The data is visualised in the two-dimensional input space in \autoref{fig:data}. From the plot it is clear that a
@@ -131,39 +133,37 @@
         \caption{Plot of the two-dimensional input features (1000 datapoints, 2 classes)}
     \end{figure}
 
-    \section{Model training}\label{sec:model-training}
+    \section{Linear classifier training}\label{sec:linear-training}
     The data was split into a training set of 800 points and a test set of 200 points, and the gradient descent
     algorithm with a learning rate of 0.001 was applied to find the weights for the linear classifier. The mean
-    log-likelihood (where the mean is taken across all of the weights) is plotted in \autoref{fig:log_likelihood} for
+    log-likelihood (where the mean is taken across all of the weights) is plotted in \autoref{fig:linear_log_likelihood} for
     the training and test datasets at each iteration.
 
     \begin{figure}[h]
-        \label{fig:log_likelihood}
+        \label{fig:linear_log_likelihood}
         \centering
         \includegraphics[width=0.8\textwidth]{plots/log_likelihood.png}
         \caption{Plot of the mean log-likelihood of the weights for the test and training data, over the
         course of model training}
     \end{figure}
 
-    \autoref{fig:log_likelihood} shows that a plateau is reached for the log-likelihood of the parameters in both the
+    \autoref{fig:linear_log_likelihood} shows that a plateau is reached for the log-likelihood of the parameters in both the
     training and test sets, after which no further improvements can be made. This suggests an optimum has been found for
-    this model. After training there remains a difference between the performance on the test and training sets, which
-    could suggest that the model with the given parameters has failed to capture the underlying pattern or has been
-    overfitted. The significance of this difference is assessed in the next section, along with additional performance
-    metrics.
+    this model. After training there remains a difference between the performance on the test and training sets, but not
+    at a significant level (see \autoref{sec:linear-performance}).
 
-    \section{Model performance}\label{sec:model-performance}
-    The predictive distribution of the model is shown in \autoref{fig:predictive_distribution_linear}. It is clear that
-    this model fails to accurately classify the two classes. It identifies that the general principle that a greater
-    proportion of the points with negative $x_2$ values are class 1 and more points with positive $x_2$ values are class
-    2, but it is apparent to the human eye that this is overly simplified, failing to identify the islands of class 1 in
-    class 2 and vice versa.
+    \section{Linear classifier performance}\label{sec:linear-performance}
+    The predictive distribution of the model is shown in \autoref{fig:linear_predictive_distribution}. It is clear that
+    this model fails to accurately classify the two classes. It identifies that the general principle that more of the
+    points with $x_2 < 0$ are class 1 and more of the points with $x_2 > 0$ values are class 2, but it is apparent to
+    the human eye that this is overly simplified and fails to identify the `islands' where one class appears surrounded
+    by the other.
 
     \begin{figure}[h]
-        \label{fig:predictive_distribution_linear}
+        \label{fig:linear_predictive_distribution}
         \centering
         \includegraphics[width=0.8\textwidth]{plots/predictive_distribution_linear.png}
-        \caption{Model predictive distribution overlaid on input datapoints, coloured by true classification}
+        \caption{Model predictive distribution overlaid on input datapoints coloured by class}
     \end{figure}
 
     The mean log-likelihood of the trained model evaluated on the training and test sets is shown in
@@ -171,8 +171,24 @@
     sufficiently small to suggest that overfitting has been avoided. As expected, the performance is marginally better
     for the training set, as this was the data that the model was fit to.
 
-    A hard threshold is applied to the data, where if the class probability for a datapoint is greater than 0.5 the
-    datapoint is assigned that class.
+    To find the predicted class label for a point $\boldsymbol{x}_n$, a hard threshold is applied to the predicted class
+    probabilities:
+    \begin{align*}
+        \hat{y}_n = \begin{cases}
+                        0 & \sigma(\tilde{\boldsymbol{x}}_n^T \boldsymbol{w}) \leq 0.5 \\
+                        1 & \sigma(\tilde{\boldsymbol{x}}_n^T \boldsymbol{w}) > 0.5
+                    \end{cases}
+    \end{align*}
+
+    Using the predicted class labels, the confusion matrix for the test data is found
+    (\autoref{tab:performance_metrics_linear}). The confusion matrix is a good method of assessing the classifier's
+    performance, as it shows the fraction of correct and incorrect classifications for each class.
+
+    \autoref{tab:performance_metrics_linear} shows that the linear classifier successfully identifies class 0 about
+    75\% of the time. Comparing with \autoref{fig:linear_predictive_distribution}, we can see that the decision boundary
+    (shown as a contour of value 0.0) correctly separates roughly four out of six visually identifiable clusters of
+    class 0, and fails to account for two. Similarly, the classifier identifies class 1 70\% of the time, and the
+    decision boundary separates approximately four out of five visually identifiable class 1 clusters.
 
     \begin{figure}[h]
         \label{tab:performance_metrics_linear}
@@ -180,18 +196,23 @@
         \begin{tabular}{c|c}
             \textbf{Performance metric} & \textbf{Value} \\
             \hline
-            Mean log-likelihood, training data & -0.62927 \\
-            Mean log-likelihood, test data & -0.60443 \\
+            Mean log-likelihood, training data & -0.629 \\
+            Mean log-likelihood, test data & -0.604 \\
             $\begin{pmatrix}
                  P(\hat{y}=0 | y=0) & P(\hat{y}=1 | y=0) \\
                  P(\hat{y}=0 | y=1) & P(\hat{y}=1 | y=1) \\
             \end{pmatrix}$ &
             $\begin{pmatrix}
-                0.7642 & 0.2358 \\
-                0.2766 & 0.7234 \\
+                0.764 & 0.235 \\
+                0.276 & 0.723 \\
             \end{pmatrix}$ \\
         \end{tabular}
         \caption{Performance metrics for the linear classifier}
     \end{figure}
+
+    We conclude that the linear classifier does not provide a particularly useful result for this dataset.
+    A new method is presented in the next section, which uses a non-linear basis function to allow the classifier to
+    identify non-linear class boundaries.
+
 
 \end{document}
