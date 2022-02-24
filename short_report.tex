@@ -138,23 +138,23 @@
 
     \begin{figure}
         \begin{minipage}{0.32\textwidth}
-            \label{fig:data}
             \centering
             \includegraphics[width=\textwidth]{plots/data.png}
             \captionof{figure}{Plot of the two-dimensional input features (1000 datapoints, 2 classes)}
+            \label{fig:data}
         \end{minipage}%
         \begin{minipage}{0.32\textwidth}
-            \label{fig:linear_log_likelihood}
             \centering
             \includegraphics[width=\textwidth]{plots/log_likelihood.png}
             \captionof{figure}{Plot of the mean log-likelihood of the weights for the test and training data, over the
             course of model training}
+            \label{fig:linear_log_likelihood}
         \end{minipage}%
         \begin{minipage}{0.32\textwidth}
-            \label{fig:linear_predictive_distribution}
             \centering
             \includegraphics[width=\textwidth]{plots/predictive_distribution_linear.png}
             \captionof{figure}{Model predictive distribution overlaid on input datapoints coloured by class}
+            \label{fig:linear_predictive_distribution}
         \end{minipage}
     \end{figure}
 
@@ -196,7 +196,6 @@
     decision boundary separates approximately three and a half out of five visually identifiable class 1 clusters.
 
     \begin{table}[h]
-        \label{tab:performance_metrics_linear}
         \centering
         \begin{tabular}{c|c}
             \textbf{Performance metric} & \textbf{Value} \\
@@ -213,6 +212,7 @@
             \end{pmatrix}$ \\
         \end{tabular}
         \caption{Performance metrics for the linear classifier}
+        \label{tab:performance_metrics_linear}
     \end{table}
 
     It's clear that, as expected, the linear classifier does not provide a particularly useful result for this dataset.
@@ -246,29 +246,28 @@
 
     \begin{figure}[h!]
         \begin{subfigure}{0.32\textwidth}
-            \label{fig:nonlinear_predictive_distribution_0.01}
             \centering
             \includegraphics[width=\textwidth]{plots/predictive_distribution_nonlinear_w=0.01.png}
             \caption{$l$=0.01}
+            \label{fig:nonlinear_predictive_distribution_0.01}
         \end{subfigure}
         \begin{subfigure}{0.32\textwidth}
-            \label{fig:nonlinear_predictive_distribution_0.1}
             \centering
             \includegraphics[width=\textwidth]{plots/predictive_distribution_nonlinear_w=0.1.png}
             \caption{$l$=0.1}
+            \label{fig:nonlinear_predictive_distribution_0.1}
         \end{subfigure}
         \begin{subfigure}{0.32\textwidth}
-            \label{fig:nonlinear_predictive_distribution_1}
             \centering
             \includegraphics[width=\textwidth]{plots/predictive_distribution_nonlinear_w=1.png}
             \caption{$l$=1}
+            \label{fig:nonlinear_predictive_distribution_1}
         \end{subfigure}
-        \label{fig:nonlinear_predictive_distributions}
         \caption{Non-linear classifier predictive distributions}
+        \label{fig:nonlinear_predictive_distributions}
     \end{figure}
 
     \begin{table}[h!]
-        \label{tab:performance_metrics_nonlinear}
         \centering
         \begin{tabular}{c|c|c|c}
             \textbf{Performance metric} & \textbf{$l$ = 0.01} & \textbf{$l$ = 0.1} & \textbf{$l$ = 1}\\
@@ -293,6 +292,7 @@
             \end{pmatrix}$ \\
         \end{tabular}
         \caption{Performance metrics for the linear classifier}
+        \label{tab:performance_metrics_nonlinear}
     \end{table}
 
     Increasing the width of the basis function to $l = 0.1$ drastically improves the classifier's performance,
