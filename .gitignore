@@ -6,3 +6,5 @@ out/*.out
 out/*.pyg
 out/*.synctex.gz
 venv
+_minted-short_report
+.ipynb_checkpoints
