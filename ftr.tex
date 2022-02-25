@@ -51,7 +51,7 @@
         \ln f(\bm{x}) &\approx \ln f(\bm{x}_0) + \nabla \ln f(\bm{x}) \big|_{\bm{x} = \bm{x}_0} (\bm{x} - \bm{x}_0)
         + \frac{1}{2} (\bm{x} - \bm{x}_0)^T \nabla^2 \ln f(\bm{x}) \big|_{\bm{x} = \bm{x}_0} (\bm{x} - \bm{x}_0)
     \end{align}
-    At a maximum of $f(\bm{x})$, $\nabla \ln f(\bm{x}) = 0$ as the logarithm is a monotonic function. Hence:
+    At a maximum of $f(\bm{x})$, $\nabla \ln f(\bm{x}) = 0$ as the logarithm is a monotonic function. Hence, close to $\bm{x}_0$:
     \begin{align}
         \ln f(\bm{x}) \approx \ln f(\bm{x}_0) + \frac{1}{2} (\bm{x} - \bm{x}_0)^T \nabla^2 \ln f(\bm{x}) \big|_{\bm{x} = \bm{x}_0} (\bm{x} - \bm{x}_0) \nonumber \\
         f(\bm{x}) \approx f(\bm{x}_0) \exp \left(\frac{1}{2} (\bm{x} - \bm{x}_0)^T \nabla^2 \ln f(\bm{x}) \big|_{\bm{x} = \bm{x}_0} (\bm{x} - \bm{x}_0) \right)
@@ -110,12 +110,17 @@
     \begin{align}
         \bm{C}_N^{-1} &= -\nabla^2 \ln p(\bm{w} | \bm{X}, \bm{y}) \big|_{\bm{w} =\bm{w}_{\text{MAP}}} \nonumber \\
         &= \bm{C}_0^{-1}
-        + \sum_{n=1}^N \sigma(\bm{w}^T \tilde{\bm{x}}_N) \sigma(-\bm{w}^T \tilde{\bm{x}}_N)\tilde{\bm{x}}_N\tilde{\bm{x}}_N^T
+        + \sum_{n=1}^N \sigma(\bm{w}^T \tilde{\bm{x}}_n) \sigma(-\bm{w}^T \tilde{\bm{x}}_n)\tilde{\bm{x}}_n\tilde{\bm{x}}_n^T
     \end{align}
-    Hence, using \autoref{eq:laplace_approximation} and \autoref{eq:normalising_constant}:
+    Defining $\bm{\sigma} = \sigma(\tilde{\bm{X}}^T \bm{w})$, this can be written in vector form as:
+    \begin{align}
+         \bm{C}_N^{-1} &= \bm{C}_0^{-1} + \tilde{\bm{X}}\tilde{\bm{X}}^T \bm{\sigma} (1 - \bm{\sigma})
+    \end{align}
+    Hence, using \autoref{eq:laplace_approximation}, the posterior distribution is:
     \begin{align}
         p(\bm{w} | \bm{X}, \bm{y}) \approx \mathcal{N}(\bm{w}; \bm{w}_\text{MAP}, \bm{C}_N)
     \end{align}
+    And using \autoref{eq:normalising_constant}, the model evidence is:
     \begin{align}
         p(\bm{X} | \bm{y}) = \frac{(2\pi)^\frac{N}{2}}{\det \bm{C}_N^{-\frac{1}{2}}}
                             p(\bm{X} | \bm{w} = \bm{w}_\text{MAP}, \bm{y}) p(\bm{w} = \bm{w}_\text{MAP})
@@ -128,8 +133,15 @@
     \begin{align}
         p(\bm{w}) = \mathcal{N}(\bm{w}; 0, \bm{I}\sigma_0^2)
     \end{align}
-
-
+    This gives the posterior as:
+    \begin{align}
+        p(\bm{w} | \bm{X}, \bm{y}) \approx \mathcal{N}(\bm{w}; \bm{w}_\text{MAP}, \bm{C}_N)
+    \end{align}
+    And the evidence as:
+    \begin{align}
+        p(\bm{X} | \bm{y}) = \frac{(2\pi)^\frac{N}{2}}{\det \bm{C}_N^{-\frac{1}{2}}}
+                            p(\bm{X} | \bm{w} = \bm{w}_\text{MAP}, \bm{y}) p(\bm{w} = \bm{w}_\text{MAP})
+    \end{align}
 
 
 
