@@ -5,6 +5,9 @@ out/*.log
 out/*.out
 out/*.pyg
 out/*.synctex.gz
+out/*.dvi
+out/*.fdb_latexmk
+out/*.fls
 venv
 _minted-short_report
 .ipynb_checkpoints
