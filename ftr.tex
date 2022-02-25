@@ -1,0 +1,130 @@
+\documentclass[a4paper]{article}
+
+\usepackage[margin=1in]{geometry}
+\usepackage{amsfonts}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{bm}
+\usepackage[justification=centering]{caption}
+\usepackage{float}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage[outputdir=out]{minted}
+\usepackage{subcaption}
+
+
+\def\sectionautorefname{Section}
+\def\subsectionautorefname{Section}
+\def\subsubsectionautorefname{Section}
+\def\figureautorefname{Figure}
+\def\tableautorefname{Table}
+\def\equationautorefname{Equation}
+
+
+\begin{document}
+
+    \title{Bayesian Logistic Classification}
+    \author{3F8: Inference Coursework \\ Theo Brown \\ Selwyn College, University of Cambridge}
+    \date{\today}
+    \maketitle
+
+    \begin{abstract}
+        Abstract goes here
+    \end{abstract}
+    
+    \section{Introduction}\label{sec:introduction}
+
+    \section{Laplace approximation}\label{sec:laplace-approximation}
+    To define a probability distribution function (PDF) $p(\bm{x})$, $\bm{x} \in \mathbb{R}^N$ it is necessary to integrate a function to find the
+    normalising constant K:
+    \begin{align}
+        p(\bm{x}) := \frac{f(\bm{x})}{\int f(\bm{x}) d\bm{x}} = \frac{1}{K} f(\bm{x})
+    \end{align}
+    In many cases, the integral $\int f(\bm{x}) d\bm{x}$ is intractable and does not have a closed-form solution.
+
+    The Laplace approximation finds a Gaussian, $q(\bm{x})$, that provides a good approximation to $p(\bm{x})$ near a
+    local maximum of $p(\bm{x})$. As $q(\bm{x})$ is Gaussian, its normalising constant is easy to find, so the
+    problem of solving $\int f(\bm{x}) d\bm{x}$ is avoided.
+
+    Initially, consider the truncated Taylor expansion of $\ln f(\bm{x})$ around a local maximum $\bm{x}_0$:
+    \begin{align}
+        \ln f(\bm{x}) &\approx \ln f(\bm{x}_0) + \nabla \ln f(\bm{x}) \big|_{\bm{x} = \bm{x}_0} (\bm{x} - \bm{x}_0)
+        + \frac{1}{2} (\bm{x} - \bm{x}_0)^T \nabla^2 \ln f(\bm{x}) \big|_{\bm{x} = \bm{x}_0} (\bm{x} - \bm{x}_0)
+    \end{align}
+    At a maximum of $f(\bm{x})$, $\nabla \ln f(\bm{x}) = 0$ as the logarithm is a monotonic function. Hence:
+    \begin{align}
+        \ln f(\bm{x}) \approx \ln f(\bm{x}_0) + \frac{1}{2} (\bm{x} - \bm{x}_0)^T \nabla^2 \ln f(\bm{x}) \big|_{\bm{x} = \bm{x}_0} (\bm{x} - \bm{x}_0) \nonumber \\
+        f(\bm{x}) \approx f(\bm{x}_0) \exp \left(\frac{1}{2} (\bm{x} - \bm{x}_0)^T \nabla^2 \ln f(\bm{x}) \big|_{\bm{x} = \bm{x}_0} (\bm{x} - \bm{x}_0) \right)
+        \label{eq:laplace_f_gaussian}
+    \end{align}
+    \autoref{eq:laplace_f_gaussian} is of the form of an un-normalised Gaussian. Let $\bm{P} = -\nabla^2 \ln f(\bm{x})\big|_{\bm{x} = \bm{x}_0}$,
+    and normalise \autoref{eq:laplace_f_gaussian} to get an approximation for $p(\bm{x})$:
+    \begin{align}
+        p(\bm{x}) &\approx \frac{1}{(2\pi)^\frac{M}{2} \det\bm{P}^{-\frac{1}{2}}} \exp \left(\frac{1}{2} (\bm{x} - \bm{x}_0)^T \bm{P} (\bm{x} - \bm{x}_0) \right) \nonumber \\
+        &= \mathcal{N}(\bm{x}; \bm{x}_0, \bm{P}^{-1})
+        \label{eq:laplace_approximation}
+    \end{align}
+    For this to hold, $\bm{P}$ must be positive definite, i.e. $\bm{x}_0$ must be a maximum.
+
+    This method can be used instead to find an approximate value of the normalising constant K. Substituting
+    \autoref{eq:laplace_f_gaussian} into the definition of K:
+    \begin{align}
+        K = \int f(\bm{x}) d\bm{x} &\approx f(\bm{x}_0) \int \exp \left(\frac{1}{2} (\bm{x} - \bm{x}_0)^T \bm{P} (\bm{x} - \bm{x}_0) \right) d\bm{x} \nonumber \\
+        &= \frac{(2\pi)^\frac{N}{2}}{\det \bm{P}^\frac{1}{2}} f(\bm{x}_0)
+        \label{eq:normalising_constant}
+    \end{align}
+
+    \section{Recovering Bayesian logistic regression}
+    \subsection{Posterior distribution}
+    In the previous report, the maximum-likelihood estimate for the model weights was used in classification\footnote{For the model definition, and definitions of $\bm{X}$, $\bm{y}$, $\tilde{\bm{x}}$, etc, see the previous report.}.
+    It is desirable to have a full posterior distribution of the weights:
+    \begin{align}
+        p(\bm{w} | \bm{X}, \bm{y}) = \frac{p(\bm{X} | \bm{w}, \bm{y}) p(\bm w)}{p(\bm{X} | \bm{y})}
+        \label{eq:posterior}
+    \end{align}
+
+    The problem is that calculating \autoref{eq:posterior} requires normalising a product of logistic functions, which
+    is difficult. The Laplace approximation can be used to calculate the normalising constant $p(\bm{X} | \bm{y})$,
+    also called the model evidence, and calculate an approximate posterior distribution.
+
+    Given that the posterior Laplace approximation will be Gaussian, it is sensible to choose a Gaussian prior:
+    \begin{align}
+        p(\bm{w}) = \mathcal{N}(\bm{w}; \bm{m}_0, \bm{C}_0)
+        \label{eq:gaussian_prior}
+    \end{align}
+
+    In order to apply the Laplace approximation, we need the location of a maximum in the posterior. Using the results
+    for the log-likelihood of the logistic model and the log of \autoref{eq:gaussian_prior}, the log-posterior is:
+    \begin{align}
+        \ln p(\bm{w} | \bm{X}, \bm{y}) =
+        & \sum_{n=1}^{N} y_n \log\sigma( \bm{w}^T \tilde{\bm{x}}_n) + (1-y_n) \log\sigma(-\bm{w}^T \tilde{\bm{x}}_n) \nonumber \\
+        & + \frac{1}{2} (\bm{w} - \bm{w}_0)^T \bm{C}_0^{-1} (\bm{w} - \bm{w}_0) \nonumber \\
+        & + \text{const}
+        \label{eq:log_posterior}
+    \end{align}
+    The value of $\bm{w}$ at the maximum, $\bm{w}_{\text{MAP}}$, can be found by setting the derivative of
+    \autoref{eq:log_posterior} to zero. As outlined in \autoref{sec:laplace-approximation} $\bm{w}_{\text{MAP}}$ will
+    be the mean of $q(\bm{w})$.
+
+    Using \autoref{eq:laplace_approximation}, the covariance matrix of $q(\bm{w})$ can be found:
+    \begin{align}
+        \bm{C}_N^{-1} &= -\nabla^2 \ln p(\bm{w} | \bm{X}, \bm{y}) \big|_{\bm{w} =\bm{w}_{\text{MAP}}} \nonumber \\
+        &= \bm{C}_0^{-1}
+        + \sum_{n=1}^N \sigma(\bm{w}^T \tilde{\bm{x}}_N) \sigma(-\bm{w}^T \tilde{\bm{x}}_N)\tilde{\bm{x}}_N\tilde{\bm{x}}_N^T
+    \end{align}
+    Hence, using \autoref{eq:laplace_approximation} and \autoref{eq:normalising_constant}:
+    \begin{align}
+        p(\bm{w} | \bm{X}, \bm{y}) \approx \mathcal{N}(\bm{w}; \bm{w}_\text{MAP}, \bm{C}_N)
+    \end{align}
+    \begin{align}
+        p(\bm{X} | \bm{y}) = \frac{(2\pi)^\frac{N}{2}}{\det \bm{C}_N^{-\frac{1}{2}}}
+                            p(\bm{X} | \bm{w} = \bm{w}_\text{MAP}, \bm{y}) p(\bm{w} = \bm{w}_\text{MAP})
+    \end{align}
+
+    \subsection{Predictive distribution}
+
+
+
+
+
+\end{document}
