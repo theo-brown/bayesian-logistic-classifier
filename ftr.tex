@@ -39,7 +39,7 @@
     This is useful when the desired distribution $p(\bm{x})$ is intractable and difficult to manipulate.
 
     In the previous report, the maximum-likelihood estimate for the model weights was used in classification\footnote{For the model definition, and definitions of $\bm{X}$, $\bm{y}$, $\tilde{\bm{x}}$, etc, see the previous report.}.
-    For Bayesian classification, a full posterior distribution of the weights is required:
+    A full posterior distribution of the weights is required to perform fully Bayesian classification:
     \begin{align}
         p(\bm{w} | \bm{X}, \bm{y}) = \frac{p(\bm{X} | \bm{w}, \bm{y}) p(\bm w)}{p(\bm{X} | \bm{y})}
         \label{eq:posterior}
@@ -48,15 +48,24 @@
     The Laplace approximation can be used to find an approximate posterior distribution and an approximate predictive distribution for the logistic classifier, while avoiding the difficult integral.
     The derivation of these results is found in \autoref{app:derivation}.
 
-    In this application, the prior on the model weights is chosen to be Gaussian:
+    In this application, the prior distribution of the model weights is chosen to be Gaussian:
     \begin{align}
         p(\bm{w}) = \mathcal{N}(\bm{w}; 0, \bm{I}\sigma_0^2)
     \end{align}
-    This gives the Laplace approximation of the posterior as:
+    The Laplace approximation requires the location of a maximum in the distribution to be approximated, which in this case will be the MAP estimate of $\bm{w}$.
+    This can be found by applying gradient ascent to the posterior.
+    Firstly, the gradient of the log-posterior is calculated, using the expression for the derivative of the log-likelihood from the previous report:
+    \begin{align}
+        \frac{\partial}{\partial \bm{w}} \log p(\bm{w} | \tilde{\bm{X}}, \bm{y}) &= \frac{\partial}{\partial \bm{w}} \log p(\tilde{\bm{X}} | \bm{w} , \bm{y}) + \frac{\partial}{\partial \bm{w}} \log p(\bm{w}) \nonumber \\
+        &= \tilde{\bm{X}} (\textbf{y} - \sigma(\tilde{\bm{X}}^T \bm{w})) + \frac{1}{\sigma_0^2} \bm{w}
+    \end{align}
+    This can then be used with a standard gradient-based solver such as \verb`scipy.optimize.fmin_l_bfgs_b` to find a value for $\bm{w}_\text{MAP}$.
+
+    The Laplace approximation of the posterior of the model weights is:
     \begin{align}
         p(\bm{w} | \bm{X}, \bm{y}) \approx \mathcal{N}(\bm{w}; \bm{w}_\text{MAP}, \bm{C}_N)
     \end{align}
-    And the predictive distribution as:
+    And the predictive distribution is:
     \begin{align}
          p(y^* = 1 | \bm{x}^*, \bm{y}, \bm{X}) &\approx \sigma\left(\frac{\mu_p}{\sqrt{1 + \sigma_p^2\lambda^2}}\right)
     \end{align}
@@ -66,7 +75,7 @@
         \bm{\sigma} &= \sigma(\tilde{\bm{X}}^T \bm{w}) \\
         \mu_p &= {\bm{x}^*}^T \bm{w}_\text{MAP} \\
         \sigma_p^2 &= {\bm{x}^*}^T \bm{C}_N \bm{x^*} \\
-        \lambda &= \sqrt{\frac{\pi}{8}}
+        \lambda^2 &= \frac{\pi}{8}
     \end{align}
 
        \newpage
