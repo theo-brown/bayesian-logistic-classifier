@@ -60,25 +60,28 @@
         &= \tilde{\bm{X}} (\textbf{y} - \sigma(\tilde{\bm{X}}^T \bm{w})) + \frac{1}{\sigma_0^2} \bm{w}
     \end{align}
     This can then be used with a standard gradient-based solver such as \verb`scipy.optimize.fmin_l_bfgs_b` to find a value for $\bm{w}_\text{MAP}$.
+    Applying the steps in \autoref{app:derivation} gives the following results.
 
-    The Laplace approximation of the posterior of the model weights is:
+    \noindent
+    Posterior distribution of $\bm{w}$:
     \begin{align}
-        p(\bm{w} | \bm{X}, \bm{y}) \approx \mathcal{N}(\bm{w}; \bm{w}_\text{MAP}, \bm{C}_N)
+        p(\bm{w} | \bm{X}, \bm{y}) &\approx \mathcal{N}(\bm{w}; \bm{w}_\text{MAP}, \bm{S}_N)
     \end{align}
-    And the predictive distribution is:
+    \noindent
+    Predictive distribution for new points $\bm{x}^*$:
     \begin{align}
-         p(y^* = 1 | \bm{x}^*, \bm{y}, \bm{X}) &\approx \sigma\left(\frac{\mu_p}{\sqrt{1 + \sigma_p^2\lambda^2}}\right)
+        p(y^* = 1 | \bm{x}^*, \bm{y}, \bm{X}) &\approx \sigma\left(\frac{\mu_p}{\sqrt{1 + \sigma_p^2\lambda^2}}\right)
     \end{align}
     where
     \begin{align}
-        \bm{C}_N &= \left(\frac{1}{\sigma_0^2}\bm{I} + \tilde{\bm{X}}\tilde{\bm{X}}^T \bm{\sigma} (1 - \bm{\sigma})\right)^{-1} \\
+        \bm{S}_N &= \left(\frac{1}{\sigma_0^2}\bm{I} + \tilde{\bm{X}}\tilde{\bm{X}}^T \bm{\sigma} (1 - \bm{\sigma})\right)^{-1} \\
         \bm{\sigma} &= \sigma(\tilde{\bm{X}}^T \bm{w}) \\
         \mu_p &= {\bm{x}^*}^T \bm{w}_\text{MAP} \\
-        \sigma_p^2 &= {\bm{x}^*}^T \bm{C}_N \bm{x^*} \\
+        \sigma_p^2 &= {\bm{x}^*}^T \bm{S}_N \bm{x^*} \\
         \lambda^2 &= \frac{\pi}{8}
     \end{align}
 
-       \newpage
+    \newpage
     \appendix
     \section{Deriving Bayesian Logistic Classification using the Laplace Approximation}
     \label{app:derivation}
@@ -125,17 +128,19 @@
 
     \subsection{Bayesian logistic regression}
     \subsubsection{Posterior distribution}
-    Given that the posterior Laplace approximation will be Gaussian, it is sensible to choose a Gaussian prior for the model weights:
+    Given that the posterior Laplace approximation will be Gaussian, a Gaussian prior for the model weights is chosen:
     \begin{align}
-        p(\bm{w}) = \mathcal{N}(\bm{w}; \bm{m}_0, \bm{C}_0)
+        p(\bm{w}) = \mathcal{N}(\bm{w}; \bm{m}_0, \bm{S}_0)
         \label{eq:gaussian_prior}
     \end{align}
-    In order to apply the Laplace approximation, we need the location of a maximum in the posterior.
-    Using the results for the likelihood of the logistic model in the previous report and the log of \autoref{eq:gaussian_prior}, the log-posterior of the model weights is:
+    In order to apply the Laplace approximation to the posterior, the location of a maximum in the posterior is required
+    (this will be the MAP estimate).
+    Using the results for the likelihood of the logistic model in the previous report and the log of \autoref{eq:gaussian_prior},
+    the log-posterior of the model weights is:
     \begin{align}
         \ln p(\bm{w} | \bm{X}, \bm{y}) =
         & \sum_{n=1}^{N} y_n \log\sigma( \bm{w}^T \tilde{\bm{x}}_n) + (1-y_n) \log\sigma(-\bm{w}^T \tilde{\bm{x}}_n) \nonumber \\
-        & + \frac{1}{2} (\bm{w} - \bm{w}_0)^T \bm{C}_0^{-1} (\bm{w} - \bm{w}_0) \nonumber \\
+        & + \frac{1}{2} (\bm{w} - \bm{w}_0)^T \bm{S}_0^{-1} (\bm{w} - \bm{w}_0) \nonumber \\
         & + \text{const}
         \label{eq:log_posterior}
     \end{align}
@@ -145,21 +150,21 @@
 
     Using \autoref{eq:laplace_approximation}, the covariance matrix of $q(\bm{w})$ can be found:
     \begin{align}
-        \bm{C}_N^{-1} &= -\nabla^2 \ln p(\bm{w} | \bm{X}, \bm{y}) \big|_{\bm{w} =\bm{w}_{\text{MAP}}} \nonumber \\
-        &= \bm{C}_0^{-1}
+        \bm{S}_N^{-1} &= -\nabla^2 \ln p(\bm{w} | \bm{X}, \bm{y}) \big|_{\bm{w} =\bm{w}_{\text{MAP}}} \nonumber \\
+        &= \bm{S}_0^{-1}
         + \sum_{n=1}^N \sigma(\bm{w}^T \tilde{\bm{x}}_n) \sigma(-\bm{w}^T \tilde{\bm{x}}_n)\tilde{\bm{x}}_n\tilde{\bm{x}}_n^T
     \end{align}
     Defining $\bm{\sigma} = \sigma(\tilde{\bm{X}}^T \bm{w})$, this can be written in vector form as:
     \begin{align}
-         \bm{C}_N^{-1} &= \bm{C}_0^{-1} + \tilde{\bm{X}}\tilde{\bm{X}}^T \bm{\sigma} (1 - \bm{\sigma})
+         \bm{S}_N^{-1} &= \bm{S}_0^{-1} + \tilde{\bm{X}}\tilde{\bm{X}}^T \bm{\sigma} (1 - \bm{\sigma})
     \end{align}
     Hence, using \autoref{eq:laplace_approximation}, the posterior distribution is:
     \begin{align}
-        p(\bm{w} | \bm{X}, \bm{y}) \approx \mathcal{N}(\bm{w}; \bm{w}_\text{MAP}, \bm{C}_N)
+        p(\bm{w} | \bm{X}, \bm{y}) \approx \mathcal{N}(\bm{w}; \bm{w}_\text{MAP}, \bm{S}_N)
     \end{align}
     And using \autoref{eq:normalising_constant}, the normalizing constant is:
     \begin{align}
-        p(\bm{X} | \bm{y}) = \frac{(2\pi)^\frac{N}{2}}{\det \bm{C}_N^{-\frac{1}{2}}}
+        p(\bm{X} | \bm{y}) = \frac{(2\pi)^\frac{N}{2}}{\det \bm{S}_N^{-\frac{1}{2}}}
                             p(\bm{X} | \bm{w} = \bm{w}_\text{MAP}, \bm{y}) p(\bm{w} = \bm{w}_\text{MAP})
     \end{align}
 
@@ -182,13 +187,13 @@
     Hence, the approximate predictive distribution is:
     \begin{align}
         \label{eq:approx_predictive}
-         p(y^* = 1 | \bm{x}^*, \bm{y}, \bm{X}) &\approx \int \sigma(a) \mathcal{N}(a; {\bm{x}^*}^T \bm{w}_\text{MAP}, {\bm{x}^*}^T \bm{C}_N \bm{x^*}) da \nonumber \\
+         p(y^* = 1 | \bm{x}^*, \bm{y}, \bm{X}) &\approx \int \sigma(a) \mathcal{N}(a; {\bm{x}^*}^T \bm{w}_\text{MAP}, {\bm{x}^*}^T \bm{S}_N \bm{x^*}) da \nonumber \\
         &= \int \sigma(a) \mathcal{N}(a; \mu_p, \sigma_p^2) da
      \end{align}
     Where
     \begin{align}
         \mu_p &= {\bm{x}^*}^T \bm{w}_\text{MAP}\\
-        \sigma_p^2 &= {\bm{x}^*}^T \bm{C}_N \bm{x^*}
+        \sigma_p^2 &= {\bm{x}^*}^T \bm{S}_N \bm{x^*}
     \end{align}
     This integral cannot be expressed analytically, so another approximation is required.
     The logistic function can be approximated well by a probit function scaled such that the gradient of the two functions at the origin are equal.
