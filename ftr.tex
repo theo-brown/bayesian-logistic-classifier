@@ -12,7 +12,6 @@
 \usepackage[outputdir=out]{minted}
 \usepackage{subcaption}
 
-
 \def\sectionautorefname{Section}
 \def\subsectionautorefname{Section}
 \def\subsubsectionautorefname{Section}
@@ -35,16 +34,14 @@
     \section{Introduction}\label{sec:introduction}
 
     \section{Laplace approximation for logistic regression}
-    The Laplace approximation finds a Gaussian, $q(\bm{x})$, that provides a good approximation to a probability distribution $p(\bm{x})$ near a local maximum of $p(\bm{x})$.
-    This is useful when the desired distribution $p(\bm{x})$ is intractable and difficult to manipulate.
-
+    \subsection{Justification}
     In the previous report, the maximum-likelihood estimate for the model weights was used in classification\footnote{For the model definition, and definitions of $\bm{X}$, $\bm{y}$, $\tilde{\bm{x}}$, etc, see the previous report.}.
     A full posterior distribution of the weights is required to perform fully Bayesian classification:
     \begin{align}
         p(\bm{w} | \bm{X}, \bm{y}) = \frac{p(\bm{X} | \bm{w}, \bm{y}) p(\bm w)}{p(\bm{X} | \bm{y})}
         \label{eq:posterior}
     \end{align}
-    Calculating the normalising constant (also called the evidence) $p(\bm{X} | \bm{y})$ requires integrating a product of logistic functions, which is intractable.
+    Calculating the model evidence $p(\bm{X} | \bm{y})$ requires integrating a product of logistic functions, which is intractable.
     The Laplace approximation can be used to find an approximate posterior distribution and an approximate predictive distribution for the logistic classifier, while avoiding the difficult integral.
     The derivation of these results is found in \autoref{app:derivation}.
 
@@ -52,34 +49,131 @@
     \begin{align}
         p(\bm{w}) = \mathcal{N}(\bm{w}; 0, \bm{I}\sigma_0^2)
     \end{align}
+    
+    \subsubsection{Finding the MAP estimate}
     The Laplace approximation requires the location of a maximum in the distribution to be approximated, which in this case will be the MAP estimate of $\bm{w}$.
     This can be found by applying gradient ascent to the posterior.
-    Firstly, the gradient of the log-posterior is calculated, using the expression for the derivative of the log-likelihood from the previous report:
+    Firstly, the gradient of the log-posterior is calculated:
     \begin{align}
         \frac{\partial}{\partial \bm{w}} \log p(\bm{w} | \tilde{\bm{X}}, \bm{y}) &= \frac{\partial}{\partial \bm{w}} \log p(\tilde{\bm{X}} | \bm{w} , \bm{y}) + \frac{\partial}{\partial \bm{w}} \log p(\bm{w}) \nonumber \\
         &= \tilde{\bm{X}} (\textbf{y} - \sigma(\tilde{\bm{X}}^T \bm{w})) + \frac{1}{\sigma_0^2} \bm{w}
     \end{align}
-    This can then be used with a standard gradient-based solver such as \verb`scipy.optimize.fmin_l_bfgs_b` to find a value for $\bm{w}_\text{MAP}$.
-    Applying the steps in \autoref{app:derivation} gives the following results.
+    This can then be used with a standard gradient-based solver to find a value for $\bm{w}_\text{MAP}$.
+    \subsubsection{Results of the Laplace approximation}
+    Applying the Laplace approximation gives following results:
 
-    \noindent
-    Posterior distribution of $\bm{w}$:
-    \begin{align}
-        p(\bm{w} | \bm{X}, \bm{y}) &\approx \mathcal{N}(\bm{w}; \bm{w}_\text{MAP}, \bm{S}_N)
-    \end{align}
-    \noindent
-    Predictive distribution for new points $\bm{x}^*$:
-    \begin{align}
-        p(y^* = 1 | \bm{x}^*, \bm{y}, \bm{X}) &\approx \sigma\left(\frac{\mu_p}{\sqrt{1 + \sigma_p^2\lambda^2}}\right)
-    \end{align}
+    \begin{itemize}
+        \item Posterior distribution of $\bm{w}$:
+        \begin{align}
+            p(\bm{w} | \bm{X}, \bm{y}) &\approx \mathcal{N}(\bm{w}; \bm{w}_\text{MAP}, \bm{S}_N)
+        \end{align}
+        \noindent
+        \item Predictive distribution for new points $\bm{x}_*$:
+        \begin{align}
+            p(y_* = 1 | \bm{x}_*, \bm{y}, \bm{X}) &\approx \sigma\left(\frac{\mu_p}{\sqrt{1 + \sigma_p^2\lambda^2}}\right)
+        \end{align}
+        \item Model evidence:
+        \begin{align}
+            p(\bm{X} | \bm{y}) = \sqrt{\frac{(2\pi)^N}{\det \bm{S}_N^{-1}}}
+                                 \exp \left(\mathcal{L}(\bm{w}_\text{MAP}) + \mathcal{P}(\bm{w}_\text{MAP})\right)
+        \end{align}
+    \end{itemize}
     where
     \begin{align}
         \bm{S}_N &= \left(\frac{1}{\sigma_0^2}\bm{I} + \tilde{\bm{X}}\tilde{\bm{X}}^T \bm{\sigma} (1 - \bm{\sigma})\right)^{-1} \\
         \bm{\sigma} &= \sigma(\tilde{\bm{X}}^T \bm{w}) \\
-        \mu_p &= {\bm{x}^*}^T \bm{w}_\text{MAP} \\
-        \sigma_p^2 &= {\bm{x}^*}^T \bm{S}_N \bm{x^*} \\
-        \lambda^2 &= \frac{\pi}{8}
+        \mu_p &= {\tilde{\bm{x}}_*}^T \bm{w}_\text{MAP} \\
+        \sigma_p^2 &= {\tilde{\bm{x}}_*}^T \bm{S}_N \tilde{\bm{x}}_* \\
+        \lambda^2 &= \frac{\pi}{8} \\
+        \mathcal{L}(\bm{w}_\text{MAP}) &= \log p(\bm{X} | \bm{w}, \bm{y}) \big|_{\bm{w} = \bm{w}_\text{MAP}} \\
+        \mathcal{P}(\bm{w}_\text{MAP}) &= \log p(\bm{w}) \big|_{\bm{w} = \bm{w}_\text{MAP}}
     \end{align}
+    and $N$ is the number of data points $\bm{x}_n$.
+
+    \subsection{Implementation in Python}
+    Firstly, the data is loaded and split into train and test sets.
+    \begin{minted}{python}
+    import numpy as np
+    from sklearn.model_selection import train_test_split
+    from sklearn.utils import shuffle
+
+    X_data, y_data = shuffle(np.loadtxt('data/X.txt'),
+                             np.loadtxt('data/y.txt'))
+
+    X_train, X_test, y_train, y_test = train_test_split(X_data, y_data, train_size=800)
+    \end{minted}
+    Functions are defined to expand the data through a set of radial basis functions centred on the training points, and prepend a column of ones:
+    \begin{minted}{python}
+    def prepend_ones(M):
+        return np.column_stack((np.ones(M.shape[0]), M))
+
+    def expand_rbf(l, X, Z=X_train):
+        X2 = np.sum(X**2, 1)
+        Z2 = np.sum(Z**2, 1)
+        ones_Z = np.ones(Z.shape[ 0 ])
+        ones_X = np.ones(X.shape[ 0 ])
+        r2 = np.outer(X2, ones_Z) - 2 * np.dot(X, Z.T) + np.outer(ones_X, Z2)
+        return prepend_ones(np.exp(-0.5 / l**2 * r2))
+    \end{minted}
+    A numerical approximation of the MAP estimate for the weights is found:
+    \begin{minted}{python}
+    from scipy.optimize import fmin_l_bfgs_b as minimise
+
+    def logistic(x):
+        return 1 / (1 + np.exp(-x))
+
+    def log_prior(w, variance):
+        return -1 / (2 * variance) * (w.T @ w)
+
+    def log_likelihood(w, X, y):
+        sigma = logistic(X @ w)
+        return np.sum(y * np.log(sigma)
+                      + (1 - y) * np.log(1 - sigma))
+
+    def negative_log_posterior(w, X, y, prior_variance):
+        return -(log_likelihood(w, X, y) + log_prior(w, prior_variance))
+
+    def negative_posterior_gradient(w, X, y, prior_variance):
+        return -((y - logistic(X @ w)) @ X - w / prior_variance)
+
+    def find_w_map(X, y, w0=None, prior_variance=1):
+        if w0 is None:
+            w0 = np.random.normal(size=X.shape[1])
+        w_map, posterior_at_wmap, d = minimise(negative_log_posterior,
+                                               w0,
+                                               negative_posterior_gradient,
+                                               args=[X, y, prior_variance])
+        return w_map
+
+    expanded_training_set = expand_rbf(rbf_width, X_train)
+    w_map = find_w_map(expanded_training_set, y_train)
+    \end{minted}
+
+    Note that \verb`scipy.optimize.fmin_l_bfgs_b` is a minimisation function, so to maximise the posterior we have to work with the negative posterior and negative posterior gradient.
+    Once $\bm{w}_{\text{MAP}}$ is found, the Laplace approximation for the model evidence and the predictive distribution can be found:
+
+    \begin{minted}{python}
+    def S_N_inv(rbf_width, weights, prior_variance):
+        X_tilde = expand_rbf(rbf_width, X_train)
+        sigma = logistic(X_tilde @ weights)
+        return (np.identity(weights.shape[0]) / prior_variance
+                + X_tilde @ X_tilde.T @ sigma @ (1 - sigma))
+
+    def evidence(w, X, y, rbf_width, prior_variance):
+        S = S_N_inv(rbf_width, w, prior_variance)
+        return (np.sqrt(((2 * np.pi) ** y.size) / np.linalg.det(S))
+                * np.exp(log_likelihood(w, X, y) + log_prior(w, prior_variance)))
+
+    def laplace_prediction(inputs, weights, rbf_width=0.1, prior_variance=1):
+        S_N = np.linalg.inv(S_N_inv(rbf_width, weights, prior_variance))
+        predictive_mean = inputs @ weights
+        predictive_variance = np.array([x.T @ S_N @ x for x in inputs])
+        return logistic(predictive_mean / np.sqrt(1 + predictive_variance * np.pi/8))
+    \end{minted}
+
+    \section{Performance of the Laplace Approximation}
+
+
 
     \newpage
     \appendix
