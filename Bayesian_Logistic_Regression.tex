@@ -63,16 +63,16 @@
     Applying the Laplace approximation gives following results:
 
     \begin{itemize}
-        \item Posterior distribution of $\bm{w}$:
+        \item Approximate posterior distribution of $\bm{w}$:
         \begin{align}
             p(\bm{w} | \bm{X}, \bm{y}) &\approx \mathcal{N}(\bm{w}; \bm{w}_\text{MAP}, \bm{S}_N)
         \end{align}
         \noindent
-        \item Predictive distribution for new points $\bm{x}_*$:
+        \item Approximate predictive distribution for new points $\bm{x}_*$:
         \begin{align}
             p(y_* = 1 | \bm{x}_*, \bm{y}, \bm{X}) &\approx \sigma\left(\frac{\mu_p}{\sqrt{1 + \sigma_p^2\lambda^2}}\right)
         \end{align}
-        \item Model evidence:
+        \item Approximate model evidence:
         \begin{align}
             p(\bm{X} | \bm{y}) = \sqrt{\frac{(2\pi)^N}{\det \bm{S}_N^{-1}}}
                                  \exp \left(\mathcal{L}(\bm{w}_\text{MAP}) + \mathcal{P}(\bm{w}_\text{MAP})\right)
@@ -91,7 +91,7 @@
     and $N$ is the number of data points $\bm{x}_n$.
 
     \subsection{Implementation in Python}
-    Firstly, the data is loaded and split into train and test sets.
+    Firstly, the data is loaded and split into training and test sets.
     \begin{minted}{python}
     import numpy as np
     from sklearn.model_selection import train_test_split
@@ -151,24 +151,24 @@
 
     Note that \verb`scipy.optimize.fmin_l_bfgs_b` is a minimisation function, so to maximise the posterior we have to work with the negative posterior and negative posterior gradient.
     Once $\bm{w}_{\text{MAP}}$ is found, the Laplace approximation for the model evidence and the predictive distribution can be found:
-
     \begin{minted}{python}
-    def S_N_inv(rbf_width, weights, prior_variance):
+    def S_N_inv(w, rbf_width, prior_variance):
+        M = w.shape[0]
+        X_tilde = expand_rbf(rbf_width, X_train)
+        sigma = logistic(X_tilde @ w)
+        return np.identity(M) / prior_variance + X_tilde @ X_tilde.T @ sigma @ (1 - sigma)
+
+    def log_evidence(w, X, y, rbf_width, prior_variance):
+        d = np.linalg.det(S_N_inv(w, rbf_width, prior_variance))
+        return (M/2)*np.log(2*np.pi) - 0.5*np.log(d) + log_likelihood(w, X, y) + log_prior(w, prior_variance)
+
+    def laplace_prediction(inputs, weights, rbf_width, prior_variance):
         X_tilde = expand_rbf(rbf_width, X_train)
         sigma = logistic(X_tilde @ weights)
-        return (np.identity(weights.shape[0]) / prior_variance
-                + X_tilde @ X_tilde.T @ sigma @ (1 - sigma))
-
-    def evidence(w, X, y, rbf_width, prior_variance):
-        S = S_N_inv(rbf_width, w, prior_variance)
-        return (np.sqrt(((2 * np.pi) ** y.size) / np.linalg.det(S))
-                * np.exp(log_likelihood(w, X, y) + log_prior(w, prior_variance)))
-
-    def laplace_prediction(inputs, weights, rbf_width=0.1, prior_variance=1):
-        S_N = np.linalg.inv(S_N_inv(rbf_width, weights, prior_variance))
+        S_N = np.linalg.inv(S_N_inv(weights, rbf_width, prior_variance))
         predictive_mean = inputs @ weights
-        predictive_variance = np.array([x.T @ S_N @ x for x in inputs])
-        return logistic(predictive_mean / np.sqrt(1 + predictive_variance * np.pi/8))
+        predictive_variance = np.array([x.T @ C_N @ x for x in inputs])
+        return logistic(predictive_mean / np.sqrt(1 + predictive_variance*np.pi/8))
     \end{minted}
 
     \section{Performance of the Laplace Approximation}
