@@ -33,6 +33,10 @@
     \end{abstract}
     
     \section{Introduction}\label{sec:introduction}
+  Classification is the task of grouping data points according to their shared features, and assigning each group a label.
+  For a human with a small dataset, this is a trivial task, but it is much more difficult and slow with very large or complex data sets.
+  Consequently, the development of good machine classifiers is an important area in statistical learning.
+  Trained classifiers can be used as predictive tools to identify the most probable class that a new input will belong to, which could, for example, be useful in a medical setting, such as identifying the most at-risk patients.
 
     \section{Model definition}\label{sec:model-definition}
     \subsection{Logistic classification}
@@ -345,6 +349,8 @@
     \end{minted}
 
     \section{Performance of the Laplace Approximation}\label{sec:performance}
+    \subsection{Comparison with MAP and ML estimates}
+
     \subsection{Optimising the hyperparameters}
     The classifier we have implemented has two hyperparameters: \verb`rbf_width` and \verb`prior_variance`. The optimal setting for these parameters can be found by maximising the model evidence. We perform a grid search to find the maximum model evidence:
     \begin{minted}{python}
