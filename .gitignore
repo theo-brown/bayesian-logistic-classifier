@@ -8,6 +8,7 @@ out/*.synctex.gz
 out/*.dvi
 out/*.fdb_latexmk
 out/*.fls
+out/*.toc
 venv
-_minted-short_report
+out/_minted*
 .ipynb_checkpoints
