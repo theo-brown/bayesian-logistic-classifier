@@ -345,7 +345,7 @@
     \end{minted}
 
     \section{Performance of the Laplace Approximation}\label{sec:performance}
-    \section{Optimising the hyperparameters}
+    \subsection{Optimising the hyperparameters}
     The classifier we have implemented has two hyperparameters: \verb`rbf_width` and \verb`prior_variance`. The optimal setting for these parameters can be found by maximising the model evidence. We perform a grid search to find the maximum model evidence:
     \begin{minted}{python}
     def grid_search(rbf_widths, prior_variances):
