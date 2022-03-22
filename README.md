@@ -15,5 +15,7 @@ The results are compiled into two reports:
 
 ## Marks
 The reports were submitted as coursework for 3F8: Inference, a module taken as part of Part IIA (third year) of the Engineering Tripos at the University of Cambridge.
+
 *ML Logistic Classification* received a mark of 80%.
+
 *Bayesian Logistic Classification* is awaiting marking.
