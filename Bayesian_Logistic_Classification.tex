@@ -32,13 +32,14 @@
     \end{abstract}
     
     \section{Introduction}\label{sec:introduction}
-    \subsection{Motivation}
-    
+
+    \section{Model definition}\label{sec:model-definition}
     \subsection{Logistic classification}
     The logistic classifier is a binary classifier that takes a D-dimensional input $\bm{x}_n$ and outputs a class label $y_n = \{0, 1\}$, where the class labels are modelled as being independent and identically generated from a Bernoulli distribution:
     \begin{align}
         p(y_n = 1 | \tilde{\bm{x}}_n) &= \sigma (\bm{w}^T\tilde{\bm{x}}_n) \nonumber \\
         p(y_n = 0 | \tilde{\bm{x}}_n) &= 1 - \sigma (\bm{w}^T\tilde{\bm{x}}_n) = \sigma (-\bm{w}^T\tilde{\bm{x}}_n)
+        \label{eq:logistic-classifier}
     \end{align}
     with $\tilde{\bm{x}}_n = \left[1, \bm{x}_n^T \right]^T$, $\bm{w}$ as a vector of D+1 model weights, and $\sigma(x) = \frac{1}{1 + e^{-x}}$ (the logistic function).
 
@@ -65,20 +66,35 @@
     The log-posterior is:
     \begin{align}
         \log p(\bm{w} | \bm{X}, \bm{y}) = \mathcal{L}(\bm{w}) + \mathcal{P}(\bm{w}) + \text{const}
-        \label{eq:log_posterior}
+        \label{eq:log-posterior}
     \end{align}
 
-    Calculating the model evidence $p(\bm{X} | \bm{y})$ exactly requires integrating the product of the likelihood and the prior, which is intractable. Instead, we use the Laplace approximation to find an approximation for the evidence.
-    
-    \subsection{Laplace approximation}
-    The Laplace approximation is a method of finding a Gaussian distribution $q(\bm{z})$ that closely models a desired distribution $p(\bm{z})$ around a local maximum of $p(\bm{z})$.
-    This allows a distribution that is difficult to normalise (such as the posterior) to be replaced with a distribution with a well-defined integral and normalising constant.
+    Calculating the model evidence $p(\bm{X} | \bm{y})$ exactly requires integrating the product of the likelihood and the prior, which is intractable.
+    We present two methods to circumvent this problem: MAP estimation and the Laplace approximation.
+
+    \subsubsection{`Semi-Bayesian' classification: MAP estimation}
+    One method of performing Bayes-driven logistic classification is to use the MAP estimate of the model weights, $\bm{w_\text{MAP}}$, which can be found by applying gradient ascent to the log-posterior.
+    This avoids needing the model evidence, but discards a lot of the information contained in the posterior and does not involve calculating the distribution of the model weights.
+    As such, it is not `true' Bayesian classification.
+    The gradient of the log-posterior is calculated as follows:
+    \begin{align}
+        \frac{\partial}{\partial \bm{w}} \log p(\bm{w} | \tilde{\bm{X}}, \bm{y}) &= \frac{\partial}{\partial \bm{w}} \mathcal{L}(\bm{w}) + \frac{\partial}{\partial \bm{w}} \mathcal{P}(\bm{w}) \nonumber \\
+        &= \sum_{n=1}^{N} \left(y_n - \sigma(\bm{w}^T \tilde{\bm{x}}_n) \right)  \tilde{\bm{x}}_n  + \frac{1}{\sigma_0^2} \bm{w} \nonumber \\
+        &= \tilde{\bm{X}} (\textbf{y} - \sigma(\tilde{\bm{X}}^T \bm{w})) + \frac{1}{\sigma_0^2} \bm{w}
+        \label{eq:log-posterior-gradient}
+    \end{align}
+    where $\tilde{\bm{X}} = [\tilde{\bm{x}}_1 \dots \tilde{\bm{x}}_N]$.
+    A standard gradient-based solver can be used with \autoref{eq:log-posterior-gradient} to find a value for $\bm{w}_\text{MAP}$, which can be used as a setting for the weights in \autoref{eq:logistic-classifier} to classify data points.
+    The performance of the MAP-based classifier will be compared to a fully Bayesian classifier later in the report (\autoref{sec:}).
+
+    \subsubsection{`True' Bayesian classification: the Laplace approximation}
+    The Laplace approximation allows us to approximate the model evidence by finding a Gaussian distribution $q(\bm{w})$ that closely models the posterior $p(\bm{w} | \tilde{\bm{X}}, \bm{y})$ around a local maximum.
+    The normalising constant of a Gaussian is well defined, so we can use this as the approximation of the evidence.
     For brevity, rewrite \autoref{eq:posterior} as:
     \begin{align}
         p(\bm{w} | \bm{X}, \bm{y}) = \frac{f(\bm{w})}{K} \approx q(\bm{w})
     \end{align}
     where $f(\bm{w}) = p(\bm{X} | \bm{w}, \bm{y}) p(\bm w)$ and $K = p(\bm{X} | \bm{y}) = \int f(\bm{w}) d\bm{w}$.
-
     To find $q(\bm{w})$, we start with the truncated Taylor expansion of $\log f(\bm{w})$ around a local maximum $\bm{w}_0$:
     \begin{align}
         \nonumber
@@ -92,31 +108,27 @@
         f(\bm{w}) \approx f(\bm{w}_0) \exp \left(\frac{1}{2} (\bm{w} - \bm{w}_0)^T \nabla^2 \log f(\bm{w}) \big|_{\bm{w} = \bm{w}_0} (\bm{w} - \bm{w}_0) \right)
         \label{eq:un-normalised-gaussian}
     \end{align}
-    \autoref{eq:un-normalised-gaussian} is of the form of an un-normalised Gaussian. Letting $\bm{S} = -\nabla^2 \log f(\bm{w})\big|_{\bm{w} = \bm{w}_0}$ and normalising \autoref{eq:un-normalised-gaussian} gives the result for $q(\bm{w})$:
+    \autoref{eq:un-normalised-gaussian} is of the form of an un-normalised Gaussian centred on the maximum at $\bm{w}_0$.
+    Set $\bm{w}_0 = \bm{w}_\text{MAP}$, and let $\bm{S}_N = -\nabla^2 \log f(\bm{w})\big|_{\bm{w} = \bm{w}_\text{MAP}}$,
+    then normalise \autoref{eq:un-normalised-gaussian} to obtain the result for $q(\bm{w})$:
     \begin{align}
-        p(\bm{w} | \tilde{\bm{X}}, \bm{y}) &\approx \frac{1}{(2\pi)^\frac{M}{2} \det\bm{S}^{-\frac{1}{2}}} \exp \left(\frac{1}{2} (\bm{w} - \bm{w}_0)^T \bm{S} (\bm{w} - \bm{w}_0) \right) \nonumber \\
-        &= \mathcal{N}(\bm{w}; \bm{w}_0, \bm{S}^{-1})
-        \label{eq:laplace_approximation}
+        p(\bm{w} | \tilde{\bm{X}}, \bm{y}) &\approx \frac{1}{(2\pi)^\frac{N}{2} \det\bm{S}_N^{-\frac{1}{2}}} \exp \left(\frac{1}{2} (\bm{w} - \ \bm{w}_\text{MAP})^T \bm{S}_N (\bm{w} -  \bm{w}_\text{MAP}) \right) \nonumber \\
+        &= \mathcal{N}(\bm{w};  \bm{w}_\text{MAP}, \bm{S}_N^{-1})
+        \label{eq:laplace-approximation}
     \end{align}
-    For this to hold, $\bm{S}$ must be positive definite, which is equivalent to saying $\bm{w}_0$ must be a maximum.
+    where N is the number of data points $\bm{x}_n$.
+    For \autoref{eq:laplace-approximation} to hold, $\bm{S}_N$ must be positive definite, which is equivalent to saying $\bm{w}_\text{MAP}$ must be a maximum (which is true by definition).
 
-    This method can also be used to find an approximate value of the normalising constant K.
-    Substituting \autoref{eq:laplace_approximation} into the definition of K:
+    Now we can obtain an approximate value of the normalising constant K, by substituting \autoref{eq:laplace-approximation} into the definition of K:
     \begin{align}
         K = \int f(\bm{w}) d\bm{w} &\approx f(\bm{w}_0) \int \exp \left(\frac{1}{2} (\bm{w} - \bm{w}_0)^T \bm{S} (\bm{w} - \bm{w}_0) \right) d\bm{w} \nonumber \\
-        &= \sqrt{\frac{(2\pi)^N}{\det \bm{S}}} f(\bm{w}_0)
-        \label{eq:normalising_constant}
+        &= \sqrt{\frac{(2\pi)^N}{\det \bm{S}_N}} f(\bm{w}_\text{MAP})
+        \label{eq:normalising-constant}
     \end{align}
 
-    Using the results for the likelihood of the logistic model in the previous report and the log of \autoref{eq:gaussian_prior},
-
-    The value of $\bm{w}$ at the maximum, $\bm{w}_{\text{MAP}}$, can be found by setting the derivative of
-    \autoref{eq:log_posterior} to zero.
-    The mean of $q(\bm{w})$ will be set to $\bm{w}_{\text{MAP}}$.
-
-    Using \autoref{eq:laplace_approximation}, the covariance matrix of $q(\bm{w})$ can be found:
+    Differentiating \autoref{eq:log-posterior-gradient}, the covariance matrix of $q(\bm{w})$ can be found:
     \begin{align}
-        \bm{S}_N^{-1} &= -\nabla^2 \log p(\bm{w} | \bm{X}, \bm{y}) \big|_{\bm{w} =\bm{w}_{\text{MAP}}} \nonumber \\
+        \bm{S}_N^{-1} &= -\nabla^2 \log p(\bm{w} | \bm{X}, \bm{y}) \big|_{\bm{w} = \bm{w}_{\text{MAP}}} \nonumber \\
         &= \bm{S}_0^{-1}
         + \sum_{n=1}^N \sigma(\bm{w}^T \tilde{\bm{x}}_n) \sigma(-\bm{w}^T \tilde{\bm{x}}_n)\tilde{\bm{x}}_n\tilde{\bm{x}}_n^T
     \end{align}
@@ -124,11 +136,11 @@
     \begin{align}
          \bm{S}_N^{-1} &= \bm{S}_0^{-1} + \tilde{\bm{X}}\tilde{\bm{X}}^T \bm{\sigma} (1 - \bm{\sigma})
     \end{align}
-    Hence, using \autoref{eq:laplace_approximation}, the posterior distribution is:
+    Hence, using \autoref{eq:laplace-approximation}, the posterior distribution is:
     \begin{align}
         p(\bm{w} | \bm{X}, \bm{y}) \approx \mathcal{N}(\bm{w}; \bm{w}_\text{MAP}, \bm{S}_N)
     \end{align}
-    And using \autoref{eq:normalising_constant}, the normalizing constant is:
+    And using \autoref{eq:normalising-constant}, the normalizing constant is:
     \begin{align}
         p(\bm{X} | \bm{y}) = \frac{(2\pi)^\frac{N}{2}}{\det \bm{S}_N^{-\frac{1}{2}}}
                             p(\bm{X} | \bm{w} = \bm{w}_\text{MAP}, \bm{y}) p(\bm{w} = \bm{w}_\text{MAP})
@@ -179,61 +191,25 @@
          p(y^* = 1 | \bm{x}^*, \bm{y}, \bm{X}) &\approx \sigma\left(\frac{\mu_p}{\sqrt{1 + \sigma_p^2\lambda^2}}\right)
     \end{align}
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    
-    \subsubsection{Finding the MAP estimate}
-    The Laplace approximation requires the location of a maximum in the distribution to be approximated, which in this case will be the MAP estimate of $\bm{w}$.
-    This can be found by applying gradient ascent to the posterior.
-    Firstly, the gradient of the log-posterior is calculated:
-    \begin{align}
-        \frac{\partial}{\partial \bm{w}} \log p(\bm{w} | \tilde{\bm{X}}, \bm{y}) &= \frac{\partial}{\partial \bm{w}} \log p(\tilde{\bm{X}} | \bm{w} , \bm{y}) + \frac{\partial}{\partial \bm{w}} \log p(\bm{w}) \nonumber \\
-        &= \tilde{\bm{X}} (\textbf{y} - \sigma(\tilde{\bm{X}}^T \bm{w})) + \frac{1}{\sigma_0^2} \bm{w}
-    \end{align}
-    This can then be used with a standard gradient-based solver to find a value for $\bm{w}_\text{MAP}$.
-    \subsubsection{Results of the Laplace approximation}
-    Applying the Laplace approximation gives following results:
-
+    \noindent\textbf{Summary of the Laplace approximation:}
     \begin{itemize}
-        \item Approximate posterior distribution of $\bm{w}$:
+        \item Posterior distribution of $\bm{w}$:
         \begin{align}
             p(\bm{w} | \bm{X}, \bm{y}) &\approx \mathcal{N}(\bm{w}; \bm{w}_\text{MAP}, \bm{S}_N)
         \end{align}
         \noindent
-        \item Approximate predictive distribution for new points $\bm{x}_*$:
+        \item Predictive distribution for new points $\bm{x}_*$:
         \begin{align}
-            p(y_* = 1 | \bm{x}_*, \bm{y}, \bm{X}) &\approx \sigma\left(\frac{\mu_p}{\sqrt{1 + \sigma_p^2\lambda^2}}\right)
+            p(y_* = 1 | \bm{x}_*, \bm{y}, \bm{X}) &\approx \sigma\left(\frac{\mu_p}{\sqrt{1 + \sigma_p^2\lambda^2}}\right) \\
+            p(y_* = 0 | \bm{x}_*, \bm{y}, \bm{X}) &= 1 - p(y_* = 1 | \bm{x}_*, \bm{y}, \bm{X}) \nonumber
         \end{align}
-        \item Approximate model evidence:
+        \item Model evidence:
         \begin{align}
-            p(\bm{X} | \bm{y}) = \sqrt{\frac{(2\pi)^N}{\det \bm{S}_N^{-1}}}
+            p(\bm{X} | \bm{y}) \approx \sqrt{\frac{(2\pi)^N}{\det \bm{S}_N^{-1}}}
                                  \exp \left(\mathcal{L}(\bm{w}_\text{MAP}) + \mathcal{S}(\bm{w}_\text{MAP})\right)
         \end{align}
     \end{itemize}
-    where
+
     \begin{align}
         \bm{S}_N &= \left(\frac{1}{\sigma_0^2}\bm{I} + \tilde{\bm{X}}\tilde{\bm{X}}^T \bm{\sigma} (1 - \bm{\sigma})\right)^{-1} \\
         \bm{\sigma} &= \sigma(\tilde{\bm{X}}^T \bm{w}) \\
@@ -241,9 +217,9 @@
         \sigma_p^2 &= {\tilde{\bm{x}}_*}^T \bm{S}_N \tilde{\bm{x}}_* \\
         \lambda^2 &= \frac{\pi}{8} \\
         \mathcal{L}(\bm{w}_\text{MAP}) &= \log p(\bm{X} | \bm{w}, \bm{y}) \big|_{\bm{w} = \bm{w}_\text{MAP}} \\
-        \mathcal{P}(\bm{w}_\text{MAP}) &= \log p(\bm{w}) \big|_{\bm{w} = \bm{w}_\text{MAP}}
+        \mathcal{P}(\bm{w}_\text{MAP}) &= \log p(\bm{w}) \big|_{\bm{w} = \bm{w}_\text{MAP}} \\
+        N &= \text{number of data points $\bm{x}_n$}
     \end{align}
-    and $N$ is the number of data points $\bm{x}_n$.
 
     \subsection{Implementation in Python}
     Firstly, the data is loaded and split into training and test sets.
