@@ -1,0 +1,331 @@
+\documentclass[a4paper]{article}
+
+\usepackage[margin=1in]{geometry}
+\usepackage{amsfonts}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{bm}
+\usepackage[justification=centering]{caption}
+\usepackage{float}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage[outputdir=out]{minted}
+\usepackage{subcaption}
+
+\def\sectionautorefname{Section}
+\def\subsectionautorefname{Section}
+\def\subsubsectionautorefname{Section}
+\def\figureautorefname{Figure}
+\def\tableautorefname{Table}
+\def\equationautorefname{Equation}
+
+
+\begin{document}
+
+    \title{Bayesian Logistic Classification}
+    \author{3F8: Inference Coursework \\ Theo Brown \\ Selwyn College, University of Cambridge}
+    \date{\today}
+    \maketitle
+
+    \begin{abstract}
+        Abstract goes here
+    \end{abstract}
+    
+    \section{Introduction}\label{sec:introduction}
+    \subsection{Motivation}
+    
+    \subsection{Logistic classification}
+    The logistic classifier is a binary classifier that takes a D-dimensional input $\bm{x}_n$ and outputs a class label $y_n = \{0, 1\}$, where the class labels are modelled as being independent and identically generated from a Bernoulli distribution:
+    \begin{align}
+        p(y_n = 1 | \tilde{\bm{x}}_n) &= \sigma (\bm{w}^T\tilde{\bm{x}}_n) \nonumber \\
+        p(y_n = 0 | \tilde{\bm{x}}_n) &= 1 - \sigma (\bm{w}^T\tilde{\bm{x}}_n) = \sigma (-\bm{w}^T\tilde{\bm{x}}_n)
+    \end{align}
+    with $\tilde{\bm{x}}_n = \left[1, \bm{x}_n^T \right]^T$, $\bm{w}$ as a vector of D+1 model weights, and $\sigma(x) = \frac{1}{1 + e^{-x}}$ (the logistic function).
+
+    \subsection{Bayesian logistic classification}
+    A posterior distribution of the model weights is required to perform fully Bayesian classification:
+    \begin{align}
+        p(\bm{w} | \bm{X}, \bm{y}) = \frac{p(\bm{X} | \bm{w}, \bm{y}) p(\bm w)}{p(\bm{X} | \bm{y})}
+        \label{eq:posterior}
+    \end{align}
+    From the definition of the logistic classifier, the log-likelihood of \textbf{w} is:
+    \begin{align}
+        \mathcal{L}(\bm{w}) = \log p(y|\tilde{\bm{X}}, \bm{w})
+        &= \log \prod_{n=1}^{N} \sigma( \bm{w}^T \tilde{\bm{x}}_n)^{y_n}
+        \sigma (-\bm{w}^T \tilde{\bm{x}}_n)^{1-y_n} \nonumber \\
+        &= \sum_{n=1}^{N} y_n \log\sigma( \bm{w}^T \tilde{\bm{x}}_n) + (1-y_n) \log\sigma(-w^T \tilde{\bm{x}}_n)
+        \label{eq:log-likelihood}
+    \end{align}
+    The prior distribution of the model weights is chosen to be Gaussian, $p(\bm{w}) = \mathcal{N}(\bm{w}; \bm{m}_0, \bm{S}_0)$.
+    This gives the log-prior as:
+    \begin{align}
+        \mathcal{P}(\bm{w}) = \log p(\bm{w}) = -\frac{1}{2\sigma_0^2}(\bm{w} - \bm{m}_0)^T \bm{S}_0^{-1} (\bm{w} - \bm{m}_0) + \text{const}
+        \label{eq:log-prior}
+    \end{align}
+    The log-posterior is:
+    \begin{align}
+        \log p(\bm{w} | \bm{X}, \bm{y}) = \mathcal{L}(\bm{w}) + \mathcal{P}(\bm{w}) + \text{const}
+        \label{eq:log_posterior}
+    \end{align}
+
+    Calculating the model evidence $p(\bm{X} | \bm{y})$ exactly requires integrating the product of the likelihood and the prior, which is intractable. Instead, we use the Laplace approximation to find an approximation for the evidence.
+    
+    \subsection{Laplace approximation}
+    The Laplace approximation is a method of finding a Gaussian distribution $q(\bm{z})$ that closely models a desired distribution $p(\bm{z})$ around a local maximum of $p(\bm{z})$.
+    This allows a distribution that is difficult to normalise (such as the posterior) to be replaced with a distribution with a well-defined integral and normalising constant.
+    For brevity, rewrite \autoref{eq:posterior} as:
+    \begin{align}
+        p(\bm{w} | \bm{X}, \bm{y}) = \frac{f(\bm{w})}{K} \approx q(\bm{w})
+    \end{align}
+    where $f(\bm{w}) = p(\bm{X} | \bm{w}, \bm{y}) p(\bm w)$ and $K = p(\bm{X} | \bm{y}) = \int f(\bm{w}) d\bm{w}$.
+
+    To find $q(\bm{w})$, we start with the truncated Taylor expansion of $\log f(\bm{w})$ around a local maximum $\bm{w}_0$:
+    \begin{align}
+        \nonumber
+        \log f(\bm{w}) &\approx \log f(\bm{w}_0) + \nabla \log f(\bm{w}) \big|_{\bm{w} = \bm{w}_0} (\bm{w} - \bm{w}_0)
+        + \frac{1}{2} (\bm{w} - \bm{w}_0)^T \nabla^2 \log f(\bm{w}) \big|_{\bm{w} = \bm{w}_0} (\bm{w} - \bm{w}_0)
+    \end{align}
+    At a maximum of $f(\bm{w})$, $\nabla \log f(\bm{w}) = 0$ as the logarithm is a monotonic function.
+    Hence, close to $\bm{w}_0$:
+    \begin{align}
+        \log f(\bm{w}) \approx \log f(\bm{w}_0) + \frac{1}{2} (\bm{w} - \bm{w}_0)^T \nabla^2 \log f(\bm{w}) \big|_{\bm{w} = \bm{w}_0} (\bm{w} - \bm{w}_0) \nonumber \\
+        f(\bm{w}) \approx f(\bm{w}_0) \exp \left(\frac{1}{2} (\bm{w} - \bm{w}_0)^T \nabla^2 \log f(\bm{w}) \big|_{\bm{w} = \bm{w}_0} (\bm{w} - \bm{w}_0) \right)
+        \label{eq:un-normalised-gaussian}
+    \end{align}
+    \autoref{eq:un-normalised-gaussian} is of the form of an un-normalised Gaussian. Letting $\bm{S} = -\nabla^2 \log f(\bm{w})\big|_{\bm{w} = \bm{w}_0}$ and normalising \autoref{eq:un-normalised-gaussian} gives the result for $q(\bm{w})$:
+    \begin{align}
+        p(\bm{w} | \tilde{\bm{X}}, \bm{y}) &\approx \frac{1}{(2\pi)^\frac{M}{2} \det\bm{S}^{-\frac{1}{2}}} \exp \left(\frac{1}{2} (\bm{w} - \bm{w}_0)^T \bm{S} (\bm{w} - \bm{w}_0) \right) \nonumber \\
+        &= \mathcal{N}(\bm{w}; \bm{w}_0, \bm{S}^{-1})
+        \label{eq:laplace_approximation}
+    \end{align}
+    For this to hold, $\bm{S}$ must be positive definite, which is equivalent to saying $\bm{w}_0$ must be a maximum.
+
+    This method can also be used to find an approximate value of the normalising constant K.
+    Substituting \autoref{eq:laplace_approximation} into the definition of K:
+    \begin{align}
+        K = \int f(\bm{w}) d\bm{w} &\approx f(\bm{w}_0) \int \exp \left(\frac{1}{2} (\bm{w} - \bm{w}_0)^T \bm{S} (\bm{w} - \bm{w}_0) \right) d\bm{w} \nonumber \\
+        &= \sqrt{\frac{(2\pi)^N}{\det \bm{S}}} f(\bm{w}_0)
+        \label{eq:normalising_constant}
+    \end{align}
+
+    Using the results for the likelihood of the logistic model in the previous report and the log of \autoref{eq:gaussian_prior},
+
+    The value of $\bm{w}$ at the maximum, $\bm{w}_{\text{MAP}}$, can be found by setting the derivative of
+    \autoref{eq:log_posterior} to zero.
+    The mean of $q(\bm{w})$ will be set to $\bm{w}_{\text{MAP}}$.
+
+    Using \autoref{eq:laplace_approximation}, the covariance matrix of $q(\bm{w})$ can be found:
+    \begin{align}
+        \bm{S}_N^{-1} &= -\nabla^2 \log p(\bm{w} | \bm{X}, \bm{y}) \big|_{\bm{w} =\bm{w}_{\text{MAP}}} \nonumber \\
+        &= \bm{S}_0^{-1}
+        + \sum_{n=1}^N \sigma(\bm{w}^T \tilde{\bm{x}}_n) \sigma(-\bm{w}^T \tilde{\bm{x}}_n)\tilde{\bm{x}}_n\tilde{\bm{x}}_n^T
+    \end{align}
+    Defining $\bm{\sigma} = \sigma(\tilde{\bm{X}}^T \bm{w})$, this can be written in vector form as:
+    \begin{align}
+         \bm{S}_N^{-1} &= \bm{S}_0^{-1} + \tilde{\bm{X}}\tilde{\bm{X}}^T \bm{\sigma} (1 - \bm{\sigma})
+    \end{align}
+    Hence, using \autoref{eq:laplace_approximation}, the posterior distribution is:
+    \begin{align}
+        p(\bm{w} | \bm{X}, \bm{y}) \approx \mathcal{N}(\bm{w}; \bm{w}_\text{MAP}, \bm{S}_N)
+    \end{align}
+    And using \autoref{eq:normalising_constant}, the normalizing constant is:
+    \begin{align}
+        p(\bm{X} | \bm{y}) = \frac{(2\pi)^\frac{N}{2}}{\det \bm{S}_N^{-\frac{1}{2}}}
+                            p(\bm{X} | \bm{w} = \bm{w}_\text{MAP}, \bm{y}) p(\bm{w} = \bm{w}_\text{MAP})
+    \end{align}
+
+    \subsection{Predictive distribution}
+    The predictive distribution can also be approximated using the Laplace method:
+    \begin{align}
+        p(y^* = 1 | \bm{x}^*, \bm{y}, \bm{X}) &= \int p(y^* = 1 | \bm{x}^*, \bm{w}) p(\bm{w} | \bm{y}, \bm{X}) d\bm{w} \nonumber \\
+        & \approx \int \sigma(\bm{w}^T\bm{x}^*) q(\bm{w}) d\bm{w}
+    \end{align}
+    Using the sifting property of the delta function:
+    \begin{align}
+        \sigma(\bm{w}^T \bm{x}) = \int \delta(a - \bm{w}^T \bm{x}) \sigma(a) da
+    \end{align}
+    Hence:
+     \begin{align}
+        p(y^* = 1 | \bm{x}^*, \bm{y}, \bm{X}) &\approx \int \int \delta(a - \bm{w}^T \bm{x}^*) \sigma(a) q(\bm{w}) d\bm{w} da \nonumber \\
+         &= \int \sigma(a) \int \delta(a - {\bm{x}^*}^T \bm{w}) q(\bm{w}) d\bm{w} da \nonumber
+    \end{align}
+    The inner integral applies a linear constraint to $q(\bm{w})$, as the argument of the delta function is 0 unless $a = {\bm{x}^*}^T \bm{w}$.
+    Hence, the approximate predictive distribution is:
+    \begin{align}
+        \label{eq:approx_predictive}
+         p(y^* = 1 | \bm{x}^*, \bm{y}, \bm{X}) &\approx \int \sigma(a) \mathcal{N}(a; {\bm{x}^*}^T \bm{w}_\text{MAP}, {\bm{x}^*}^T \bm{S}_N \bm{x^*}) da \nonumber \\
+        &= \int \sigma(a) \mathcal{N}(a; \mu_p, \sigma_p^2) da
+     \end{align}
+    Where
+    \begin{align}
+        \mu_p &= {\bm{x}^*}^T \bm{w}_\text{MAP}\\
+        \sigma_p^2 &= {\bm{x}^*}^T \bm{S}_N \bm{x^*}
+    \end{align}
+    This integral cannot be expressed analytically, so another approximation is required.
+    The logistic function can be approximated well by a probit function scaled such that the gradient of the two functions at the origin are equal.
+    It can be shown that this gives:
+    \begin{align}
+        \label{eq:probit_approx}
+        \sigma(x) \approx \Phi^{-1}\left(\sqrt{\frac{\pi}{8}} x\right) = \Phi^{-1}(\lambda x)
+    \end{align}
+    Substituting into \autoref{eq:approx_predictive} and evaluating using properties of the probit function gives:
+    \begin{align}
+         p(y^* = 1 | \bm{x}^*, \bm{y}, \bm{X}) &\approx \int \Phi^{-1}(\lambda x) \mathcal{N}(a; \mu_p, \sigma_p) da \nonumber \\
+        &= \Phi^{-1}\left(\frac{\mu_p}{\sqrt{\lambda^{-2} + \sigma_p^2}}\right)
+     \end{align}
+    Using \autoref{eq:probit_approx}, this can be converted back into a logistic function:
+    \begin{align}
+        \label{eq:predictive_distribution}
+         p(y^* = 1 | \bm{x}^*, \bm{y}, \bm{X}) &\approx \sigma\left(\frac{\mu_p}{\sqrt{1 + \sigma_p^2\lambda^2}}\right)
+    \end{align}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    
+    \subsubsection{Finding the MAP estimate}
+    The Laplace approximation requires the location of a maximum in the distribution to be approximated, which in this case will be the MAP estimate of $\bm{w}$.
+    This can be found by applying gradient ascent to the posterior.
+    Firstly, the gradient of the log-posterior is calculated:
+    \begin{align}
+        \frac{\partial}{\partial \bm{w}} \log p(\bm{w} | \tilde{\bm{X}}, \bm{y}) &= \frac{\partial}{\partial \bm{w}} \log p(\tilde{\bm{X}} | \bm{w} , \bm{y}) + \frac{\partial}{\partial \bm{w}} \log p(\bm{w}) \nonumber \\
+        &= \tilde{\bm{X}} (\textbf{y} - \sigma(\tilde{\bm{X}}^T \bm{w})) + \frac{1}{\sigma_0^2} \bm{w}
+    \end{align}
+    This can then be used with a standard gradient-based solver to find a value for $\bm{w}_\text{MAP}$.
+    \subsubsection{Results of the Laplace approximation}
+    Applying the Laplace approximation gives following results:
+
+    \begin{itemize}
+        \item Approximate posterior distribution of $\bm{w}$:
+        \begin{align}
+            p(\bm{w} | \bm{X}, \bm{y}) &\approx \mathcal{N}(\bm{w}; \bm{w}_\text{MAP}, \bm{S}_N)
+        \end{align}
+        \noindent
+        \item Approximate predictive distribution for new points $\bm{x}_*$:
+        \begin{align}
+            p(y_* = 1 | \bm{x}_*, \bm{y}, \bm{X}) &\approx \sigma\left(\frac{\mu_p}{\sqrt{1 + \sigma_p^2\lambda^2}}\right)
+        \end{align}
+        \item Approximate model evidence:
+        \begin{align}
+            p(\bm{X} | \bm{y}) = \sqrt{\frac{(2\pi)^N}{\det \bm{S}_N^{-1}}}
+                                 \exp \left(\mathcal{L}(\bm{w}_\text{MAP}) + \mathcal{S}(\bm{w}_\text{MAP})\right)
+        \end{align}
+    \end{itemize}
+    where
+    \begin{align}
+        \bm{S}_N &= \left(\frac{1}{\sigma_0^2}\bm{I} + \tilde{\bm{X}}\tilde{\bm{X}}^T \bm{\sigma} (1 - \bm{\sigma})\right)^{-1} \\
+        \bm{\sigma} &= \sigma(\tilde{\bm{X}}^T \bm{w}) \\
+        \mu_p &= {\tilde{\bm{x}}_*}^T \bm{w}_\text{MAP} \\
+        \sigma_p^2 &= {\tilde{\bm{x}}_*}^T \bm{S}_N \tilde{\bm{x}}_* \\
+        \lambda^2 &= \frac{\pi}{8} \\
+        \mathcal{L}(\bm{w}_\text{MAP}) &= \log p(\bm{X} | \bm{w}, \bm{y}) \big|_{\bm{w} = \bm{w}_\text{MAP}} \\
+        \mathcal{P}(\bm{w}_\text{MAP}) &= \log p(\bm{w}) \big|_{\bm{w} = \bm{w}_\text{MAP}}
+    \end{align}
+    and $N$ is the number of data points $\bm{x}_n$.
+
+    \subsection{Implementation in Python}
+    Firstly, the data is loaded and split into training and test sets.
+    \begin{minted}{python}
+    import numpy as np
+    from sklearn.model_selection import train_test_split
+    from sklearn.utils import shuffle
+
+    X_data, y_data = shuffle(np.loadtxt('data/X.txt'),
+                             np.loadtxt('data/y.txt'))
+
+    X_train, X_test, y_train, y_test = train_test_split(X_data, y_data, train_size=800)
+    \end{minted}
+    Functions are defined to expand the data through a set of radial basis functions centred on the training points, and prepend a column of ones:
+    \begin{minted}{python}
+    def prepend_ones(M):
+        return np.column_stack((np.ones(M.shape[0]), M))
+
+    def expand_rbf(l, X, Z=X_train):
+        X2 = np.sum(X**2, 1)
+        Z2 = np.sum(Z**2, 1)
+        ones_Z = np.ones(Z.shape[ 0 ])
+        ones_X = np.ones(X.shape[ 0 ])
+        r2 = np.outer(X2, ones_Z) - 2 * np.dot(X, Z.T) + np.outer(ones_X, Z2)
+        return prepend_ones(np.exp(-0.5 / l**2 * r2))
+    \end{minted}
+    A numerical approximation of the MAP estimate for the weights is found:
+    \begin{minted}{python}
+    from scipy.optimize import fmin_l_bfgs_b as minimise
+
+    def logistic(x):
+        return 1 / (1 + np.exp(-x))
+
+    def log_prior(w, variance):
+        return -1 / (2 * variance) * (w.T @ w)
+
+    def log_likelihood(w, X, y):
+        sigma = logistic(X @ w)
+        return np.sum(y * np.log(sigma)
+                      + (1 - y) * np.log(1 - sigma))
+
+    def negative_log_posterior(w, X, y, prior_variance):
+        return -(log_likelihood(w, X, y) + log_prior(w, prior_variance))
+
+    def negative_posterior_gradient(w, X, y, prior_variance):
+        return -((y - logistic(X @ w)) @ X - w / prior_variance)
+
+    def find_w_map(X, y, w0=None, prior_variance=1):
+        if w0 is None:
+            w0 = np.random.normal(size=X.shape[1])
+        w_map, posterior_at_wmap, d = minimise(negative_log_posterior,
+                                               w0,
+                                               negative_posterior_gradient,
+                                               args=[X, y, prior_variance])
+        return w_map
+
+    expanded_training_set = expand_rbf(rbf_width, X_train)
+    w_map = find_w_map(expanded_training_set, y_train)
+    \end{minted}
+
+    Note that \verb`scipy.optimize.fmin_l_bfgs_b` is a minimisation function, so to maximise the posterior we have to work with the negative posterior and negative posterior gradient.
+    Once $\bm{w}_{\text{MAP}}$ is found, the Laplace approximation for the model evidence and the predictive distribution can be found:
+    \begin{minted}{python}
+    def S_N_inv(w, rbf_width, prior_variance):
+        M = w.shape[0]
+        X_tilde = expand_rbf(rbf_width, X_train)
+        sigma = logistic(X_tilde @ w)
+        return np.identity(M) / prior_variance + X_tilde @ X_tilde.T @ sigma @ (1 - sigma)
+
+    def log_evidence(w, X, y, rbf_width, prior_variance):
+        d = np.linalg.det(S_N_inv(w, rbf_width, prior_variance))
+        return (M/2)*np.log(2*np.pi) - 0.5*np.log(d) + log_likelihood(w, X, y) + log_prior(w, prior_variance)
+
+    def laplace_prediction(inputs, weights, rbf_width, prior_variance):
+        X_tilde = expand_rbf(rbf_width, X_train)
+        sigma = logistic(X_tilde @ weights)
+        S_N = np.linalg.inv(S_N_inv(weights, rbf_width, prior_variance))
+        predictive_mean = inputs @ weights
+        predictive_variance = np.array([x.T @ C_N @ x for x in inputs])
+        return logistic(predictive_mean / np.sqrt(1 + predictive_variance*np.pi/8))
+    \end{minted}
+
+    \section{Performance of the Laplace Approximation}
+
+\end{document}
