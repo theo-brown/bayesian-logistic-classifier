@@ -29,16 +29,22 @@
     \maketitle
 
     \begin{abstract}
-        Abstract goes here
+        To extend the logistic classifier, two methods of Bayesian Classification are presented, based on the Maximum A Posteriori (MAP) estimate of the model weights and the Laplace approximation of the posterior distribution of the weights.
+        The performance of the Laplace classifier is shown to be superior to the MAP and Maximum Likelihood (ML) classifiers, exhibiting reduced overfitting, a closer fit to the data, and a higher correct prediction rate.
+        Optimisation of the hyperparameters of the model is achieved using the Laplace approximation of the model evidence, demonstrating a principled approach to hyperparameter setting.
     \end{abstract}
 
     \tableofcontents
 
     \section{Introduction}\label{sec:introduction}
-  Classification is the task of grouping data points according to their shared features, and assigning each group a label.
-  For a human with a small dataset, this is a trivial task, but it is much more difficult and slow with very large or complex data sets.
-  Consequently, the development of good machine classifiers is an important area in statistical learning.
-  Trained classifiers can be used as predictive tools to identify the most probable class that a new input will belong to, which could, for example, be useful in a medical setting, such as identifying the most at-risk patients.
+    Classification is the task of grouping data points according to their shared features, and assigning each group a label.
+    For a human with a small dataset, this is a trivial task, but it is much more difficult and slow with very large or complex data sets.
+    Consequently, the development of good machine classifiers is an important area in statistical learning.
+    Trained classifiers can be used as predictive tools to identify the most probable class that a new input will belong to, which could, for example, be useful in a medical setting, such as identifying the most at-risk patients.
+
+    Training a classifier requires learning a vector of model weights from data.
+    As with any statistical learning, this presents a number of challenges including overfitting and poor performance in regions of no data.
+    In this report we explore extending logistic classification into a fully Bayesian logistic classification model, which helps tackle some of the challenges encountered during learning.
 
     \section{Model definition}\label{sec:model-definition}
     \subsection{Logistic classification}
