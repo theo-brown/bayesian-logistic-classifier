@@ -18,4 +18,4 @@ The reports were submitted as coursework for 3F8: Inference, a module taken as p
 
 *ML Logistic Classification* was graded as a First (100%).
 
-*Bayesian Logistic Classification* is awaiting marking.
+*Bayesian Logistic Classification* was graded as a First (75%).
